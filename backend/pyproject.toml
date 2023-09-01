@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "queueuify"
+version = "0.1.0"
+description = ""
+authors = ["Florian-Projects <43905823+Florian-Projects@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.103.0"
+tortoise-orm = "^0.20.0"
+httpx = "^0.24.1"
+uvicorn = "^0.23.2"
+aiomysql = "^0.2.0"
+
+[tool.poetry.group.dev.dependencies]
+tortoise-orm-stubs = "^0.4.4"
+fastapi-users-tortoise = "^0.2.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
