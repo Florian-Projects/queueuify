@@ -1,13 +1,29 @@
 <mat-toolbar color="primary">
-  <button mat-icon-button class="example-icon" aria-label="Example icon-button with menu icon">
+  <button
+    mat-icon-button
+    class="example-icon"
+    aria-label="Example icon-button with menu icon"
+  >
     <mat-icon>menu</mat-icon>
   </button>
   <span>Queueify</span>
   <span class="menu-bar-spacer"></span>
-  <button *ngIf="!loggedIn" (click)="onLogin('login')" mat-icon-button class="example-icon" aria-label="Example icon-button with share icon">
+  <button
+    *ngIf="!loggedIn"
+    (click)="onLogin('login')"
+    mat-icon-button
+    class="example-icon"
+    aria-label="Example icon-button with share icon"
+  >
     <mat-icon>account_circle</mat-icon>
   </button>
-  <button *ngIf="loggedIn" (click)="onLogin('logout')" mat-icon-button class="example-icon" aria-label="Example icon-button with share icon">
+  <button
+    *ngIf="loggedIn"
+    (click)="onLogin('logout')"
+    mat-icon-button
+    class="example-icon"
+    aria-label="Example icon-button with share icon"
+  >
     <mat-icon>logout</mat-icon>
   </button>
 </mat-toolbar>

@@ -8,7 +8,7 @@ describe('OauthCallbackComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [OauthCallbackComponent]
+      declarations: [OauthCallbackComponent],
     });
     fixture = TestBed.createComponent(OauthCallbackComponent);
     component = fixture.componentInstance;

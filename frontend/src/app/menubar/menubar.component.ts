@@ -1,4 +1,11 @@
-import {Component, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+} from '@angular/core';
 
 @Component({
   selector: 'app-menubar',
@@ -7,9 +14,9 @@ import {Component, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '
 })
 export class MenubarComponent {
   @Input() loggedIn: boolean = false;
-  @Output() login = new EventEmitter<{type: string}>();
+  @Output() login = new EventEmitter<{ type: string }>();
 
-  protected onLogin(type: string) : void {
-    this.login.emit({type})
+  protected onLogin(type: string): void {
+    this.login.emit({ type });
   }
 }
