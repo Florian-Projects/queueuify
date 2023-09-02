@@ -10,11 +10,22 @@ class User(models.Model):
     refresh_token = fields.CharField(max_length=255)
     deactivated = fields.BooleanField(default=False)
 
+    @property
+    def get_session_token(self):
+        return self.apitokens.filter(is_session_token=True).first()
+
 
 class APIToken(models.Model):
-    token_type = fields.CharField(max_length=255)
-    token = fields.CharField(max_length=255, unique=True)
+    token = fields.CharField(max_length=512, unique=True)
+    owner = fields.ForeignKeyField("models.User")
+
+    is_api_token = fields.BooleanField(default=False)
+    is_session_token = fields.BooleanField(default=False)
+
     expiration_time = fields.DatetimeField(
         default=datetime.utcnow() + timedelta(hours=1), null=True
     )
-    owner = fields.ForeignKeyField("models.User")
+
+    class Meta:
+        # there should only be one session token per user
+        unique_together = ("owner", "is_session_token")

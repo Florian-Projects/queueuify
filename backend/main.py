@@ -1,22 +1,19 @@
-import binascii
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import lru_cache
+from secrets import token_urlsafe
 
 import pytz
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.authentication import (
-    AuthenticationBackend,
-    AuthenticationError,
-    AuthCredentials,
     requires,
 )
 from starlette.middleware.authentication import AuthenticationMiddleware
-from starlette.requests import HTTPConnection
 from tortoise import exceptions
 from tortoise.contrib.fastapi import register_tortoise
 
+from authentication import BearerAuthBackend
 from config.settings import Settings
 from models import User, APIToken
 from oauth.oauth import SpotifyOAuth
@@ -24,32 +21,6 @@ from spotify_connector.spotify import SpotifyConnector
 
 utc = pytz.utc
 app = FastAPI()
-
-
-class BearerAuthBackend(AuthenticationBackend):
-    # for some reason when starlet is calling the function
-    # it does so from a class object instead of an initialized class
-    @classmethod
-    async def authenticate(cls, conn: HTTPConnection):
-        if "Authorization" not in conn.headers:
-            return
-
-        auth = conn.headers["Authorization"]
-        try:
-            scheme, token = auth.split()
-            if scheme.lower() != "bearer":
-                return
-
-            if db_token := await APIToken.filter(token=token).first():
-                if db_token.expiration_time > datetime.now(utc):
-                    user = await db_token.owner
-                    return AuthCredentials(["authenticated"]), user
-                else:
-                    await db_token.delete()
-            return
-
-        except (ValueError, UnicodeDecodeError, binascii.Error) as exc:
-            raise AuthenticationError("Invalid basic auth credentials")
 
 
 @lru_cache()
@@ -71,12 +42,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 app.add_middleware(AuthenticationMiddleware, backend=BearerAuthBackend)
 
 
 @app.get("/status")
-@requires("authenticated")
 def status(request: Request):
     return {"Ok": True}
 
@@ -105,7 +74,23 @@ async def oauth_callback(code: str):
             access_token=access_token,
             refresh_token=refresh_token,
         )
-    return db_user
+
+    db_token = await APIToken.update_or_create(
+        owner=db_user,
+        is_session_token=True,
+        defaults={
+            "token": token_urlsafe(32),
+            "expiration_time": datetime.utcnow() + timedelta(hours=1),
+        },
+    )
+    return db_token
+
+
+@app.get("/logout")
+@requires("authenticated")
+async def log_out(request: Request):
+    await request.user.get_session_token.delete()
+    return {}
 
 
 register_tortoise(
