@@ -15,12 +15,10 @@ from tortoise.contrib.fastapi import register_tortoise
 
 from authentication import BearerAuthBackend
 from config.settings import Settings
+from session import session
 from models import User, APIToken
 from oauth.oauth import SpotifyOAuth
 from spotify_connector.spotify import SpotifyConnector
-
-utc = pytz.utc
-app = FastAPI()
 
 
 @lru_cache()
@@ -28,12 +26,14 @@ def get_settings():
     return Settings()
 
 
-settings = get_settings()
 spotify_oauth = SpotifyOAuth(
-    client_id=settings.spotify_client_id,
-    client_secret=settings.spotify_client_secret,
-    redirect_uri=settings.redirect_uri,
+    client_id=get_settings().spotify_client_id,
+    client_secret=get_settings().spotify_client_secret,
+    redirect_uri=get_settings().redirect_uri,
 )
+utc = pytz.utc
+
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,6 +43,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(AuthenticationMiddleware, backend=BearerAuthBackend)
+
+app.include_router(session.router, prefix="/session", tags=["session"])
 
 
 @app.get("/status")
@@ -67,6 +69,9 @@ async def oauth_callback(code: str):
 
     try:
         db_user = await User.get(external_user_id=user.id)
+        db_user.access_token = access_token
+        db_user.refresh_token = refresh_token
+        await db_user.save(update_fields=["refresh_token", "access_token"])
     except exceptions.DoesNotExist:
         db_user = await User.create(
             external_user_id=user.id,
@@ -96,7 +101,7 @@ async def log_out(request: Request):
 register_tortoise(
     app,
     db_url="mysql://docker:docker@127.0.0.1:3306/docker",
-    modules={"models": ["models"]},
+    modules={"models": ["models", "session.models"]},
     generate_schemas=True,
     add_exception_handlers=True,
 )
