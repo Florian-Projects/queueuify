@@ -1,7 +1,4 @@
-import {Component, Input} from '@angular/core';
-import {MatIconModule} from '@angular/material/icon';
-import {MatButtonModule} from '@angular/material/button';
-import {MatToolbarModule} from '@angular/material/toolbar';
+import {Component, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
 
 @Component({
   selector: 'app-menubar',
@@ -10,4 +7,9 @@ import {MatToolbarModule} from '@angular/material/toolbar';
 })
 export class MenubarComponent {
   @Input() loggedIn: boolean = false;
+  @Output() login = new EventEmitter<{type: string}>();
+
+  protected onLogin(type: string) : void {
+    this.login.emit({type})
+  }
 }

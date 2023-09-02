@@ -5,6 +5,7 @@ from secrets import token_urlsafe
 import pytz
 import uvicorn
 from fastapi import FastAPI, Request
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.authentication import (
     requires,
@@ -16,7 +17,7 @@ from tortoise.contrib.fastapi import register_tortoise
 from authentication import BearerAuthBackend
 from config.settings import Settings
 from session import session
-from models import User, APIToken
+from models import User, APIToken, OAuthCodeRequest
 from oauth.oauth import SpotifyOAuth
 from spotify_connector.spotify import SpotifyConnector
 
@@ -37,7 +38,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200"],
+    allow_origins=["http://localhost:4200", "http://127.0.0.1:4200"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -48,7 +49,7 @@ app.include_router(session.router, prefix="/session", tags=["session"])
 
 
 @app.get("/status")
-def status(request: Request):
+def status():
     return {"Ok": True}
 
 
@@ -58,12 +59,14 @@ async def login():
     authorization_url = await spotify_oauth.get_authorization_url(
         state, scope="user-read-currently-playing user-modify-playback-state"
     )
+    print(authorization_url)
     return {"authorization_url": str(authorization_url)}
 
 
-@app.get("/oauth_callback")
-async def oauth_callback(code: str):
-    access_token, refresh_token = await spotify_oauth.get_access_token(code)
+@app.post("/exchange_oauth_code")
+async def oauth_callback(body: OAuthCodeRequest):
+    access_token, refresh_token = await spotify_oauth.get_access_token(body.code)
+
     spotify_connector = SpotifyConnector(access_token)
     user = await spotify_connector.get_current_user_detail()
 
@@ -80,7 +83,7 @@ async def oauth_callback(code: str):
             refresh_token=refresh_token,
         )
 
-    db_token = await APIToken.update_or_create(
+    db_token, created = await APIToken.update_or_create(
         owner=db_user,
         is_session_token=True,
         defaults={
@@ -88,7 +91,7 @@ async def oauth_callback(code: str):
             "expiration_time": datetime.utcnow() + timedelta(hours=1),
         },
     )
-    return db_token
+    return {"api_token": db_token.token}
 
 
 @app.get("/logout")

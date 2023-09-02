@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from pydantic import BaseModel
 from tortoise import models, fields
 
 
@@ -29,3 +30,8 @@ class APIToken(models.Model):
     class Meta:
         # there should only be one session token per user
         unique_together = ("owner", "is_session_token")
+
+
+class OAuthCodeRequest(BaseModel):
+    code: str
+    state: str

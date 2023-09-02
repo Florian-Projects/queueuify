@@ -4,10 +4,10 @@
   </button>
   <span>Queueify</span>
   <span class="menu-bar-spacer"></span>
-  <button *ngIf="!loggedIn" mat-icon-button class="example-icon" aria-label="Example icon-button with share icon">
+  <button *ngIf="!loggedIn" (click)="onLogin('login')" mat-icon-button class="example-icon" aria-label="Example icon-button with share icon">
     <mat-icon>account_circle</mat-icon>
   </button>
-  <button *ngIf="loggedIn" mat-icon-button class="example-icon" aria-label="Example icon-button with share icon">
+  <button *ngIf="loggedIn" (click)="onLogin('logout')" mat-icon-button class="example-icon" aria-label="Example icon-button with share icon">
     <mat-icon>logout</mat-icon>
   </button>
 </mat-toolbar>

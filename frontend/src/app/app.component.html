@@ -1,1 +1,2 @@
-<app-menubar [loggedIn]="true"></app-menubar>
+<app-menubar [loggedIn]="loggedIn" (login)="onLogin($event)"></app-menubar>
+<router-outlet></router-outlet>
