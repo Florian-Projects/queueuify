@@ -17,6 +17,41 @@
   >
     <mat-icon>account_circle</mat-icon>
   </button>
+
+  <button
+    *ngIf="!sessionState.isInSession && loggedIn"
+    mat-raised-button
+    color="accent"
+    (click)="onCreateSession()"
+  >
+    Create Session
+  </button>
+  <span style="padding-right: 10px">{{ sessionState.sessionToken }}</span>
+  <button
+    *ngIf="!sessionState.isInSession && loggedIn"
+    mat-raised-button
+    color="accent"
+    (click)="onJoinSession()"
+  >
+    Join Session
+  </button>
+  <button
+    *ngIf="sessionState.isInSession && loggedIn && sessionState.isOwner"
+    mat-raised-button
+    color="warn"
+    (click)="onDeleteSession()"
+  >
+    Delete Session
+  </button>
+  <button
+    *ngIf="sessionState.isInSession && loggedIn && !sessionState.isOwner"
+    mat-raised-button
+    color="warn"
+    (click)="onLeaveSession()"
+  >
+    Leave Session
+  </button>
+
   <button
     *ngIf="loggedIn"
     (click)="onLogin('logout')"

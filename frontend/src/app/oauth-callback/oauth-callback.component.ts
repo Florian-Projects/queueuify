@@ -19,7 +19,6 @@ export class OauthCallbackComponent implements OnInit {
     this.route.queryParams.subscribe((params) => {
       const code = params['code'];
       const state = params['state'];
-      console.log('Fuck');
       this.http
         .post('http://127.0.0.1:8000/exchange_oauth_code', { code, state })
         .subscribe((response: any) => {

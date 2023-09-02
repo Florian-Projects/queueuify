@@ -30,6 +30,7 @@ export class LoginService {
 
   logout(): Observable<{}> {
     let session_token = localStorage.getItem('session_key');
+    localStorage.removeItem('session_key');
     return this.http
       .get<{}>(LoginService.API + '/logout', {
         headers: { Authorization: 'Bearer ' + session_token },
