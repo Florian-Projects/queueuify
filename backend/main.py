@@ -17,6 +17,7 @@ from tortoise.contrib.fastapi import register_tortoise
 from authentication import BearerAuthBackend
 from config.settings import Settings
 from session import session
+from spotify import spotify
 from models import User, APIToken, OAuthCodeRequest
 from oauth.oauth import SpotifyOAuth
 from spotify_connector.spotify import SpotifyConnector
@@ -46,6 +47,7 @@ app.add_middleware(
 app.add_middleware(AuthenticationMiddleware, backend=BearerAuthBackend)
 
 app.include_router(session.router, prefix="/session", tags=["session"])
+app.include_router(spotify.router, prefix="/spotify", tags=["spotify"])
 
 
 @app.get("/status")

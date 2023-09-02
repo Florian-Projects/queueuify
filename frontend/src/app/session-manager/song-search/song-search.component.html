@@ -1,0 +1,16 @@
+<div class="flex-container">
+  <div class="search-bar flex-column">
+    <mat-form-field class="input">
+      <mat-label>Search Song</mat-label>
+      <input
+        ngModel
+        (ngModelChange)="query$.next($event)"
+        matInput
+        placeholder="e.g. Your Mother"
+      />
+    </mat-form-field>
+  </div>
+  <div class="flex-column">
+    <app-song [songs$]="songs$"></app-song>
+  </div>
+</div>

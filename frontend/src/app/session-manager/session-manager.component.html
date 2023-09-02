@@ -3,6 +3,15 @@
   animationDuration="250"
   color="accent"
 >
-  <mat-tab label="Queue"> Content 2 </mat-tab>
+  <mat-tab label="Queue">
+    <div class="flex-container">
+      <div class="flex-column">
+        <app-song-search></app-song-search>
+      </div>
+      <div class="flex-column">
+        <app-sesion-queue></app-sesion-queue>
+      </div>
+    </div>
+  </mat-tab>
   <mat-tab label="Active Session"> Content 1 </mat-tab>
 </mat-tab-group>

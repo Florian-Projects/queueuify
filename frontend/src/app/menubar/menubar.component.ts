@@ -22,11 +22,9 @@ export class MenubarComponent implements OnInit {
   ) {}
   ngOnInit() {
     this.sessionState = this.sessionService.getSessionState();
-    if (this.loggedIn) {
-      this.sessionService.sessionChanged.subscribe(
-        (sessionState) => (this.sessionState = sessionState),
-      );
-    }
+    this.sessionService.sessionChanged.subscribe(
+      (sessionState) => (this.sessionState = sessionState),
+    );
   }
 
   protected onLogin(type: string): void {

@@ -16,6 +16,11 @@ import { SessionManagerComponent } from './session-manager/session-manager.compo
 import { JoinSessionDialogComponent } from './join-session-dialog/join-session-dialog.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatDialogModule } from '@angular/material/dialog';
+import { SongSearchComponent } from './session-manager/song-search/song-search.component';
+import { SesionQueueComponent } from './session-manager/sesion-queue/sesion-queue.component';
+import { FormsModule } from '@angular/forms';
+import { SongComponent } from './session-manager/song-search/song/song.component';
+import { MatCardModule } from '@angular/material/card';
 
 @NgModule({
   declarations: [
@@ -24,6 +29,9 @@ import { MatDialogModule } from '@angular/material/dialog';
     OauthCallbackComponent,
     SessionManagerComponent,
     JoinSessionDialogComponent,
+    SongSearchComponent,
+    SesionQueueComponent,
+    SongComponent,
   ],
   imports: [
     BrowserModule,
@@ -37,6 +45,8 @@ import { MatDialogModule } from '@angular/material/dialog';
     MatProgressSpinnerModule,
     MatInputModule,
     MatDialogModule,
+    FormsModule,
+    MatCardModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

@@ -1,8 +1,13 @@
+import json
 from http import HTTPStatus
 
 import httpx
 
-from spotify_connector.models import UserDetailResponse
+from spotify_connector.models import (
+    UserDetailResponse,
+    SongSearchResponse,
+    SpotifyTrackResponse,
+)
 
 
 class SpotifyConnector:
@@ -23,3 +28,10 @@ class SpotifyConnector:
             return True
         else:
             return False
+
+    async def search_song(self, song_name):
+        response = await self.client.get(
+            "/search", params={"q": f"track:{song_name}", "type": "track", "limit": 25}
+        )
+        return SpotifyTrackResponse(**response.json())
+        return SongSearchResponse(**response.json())

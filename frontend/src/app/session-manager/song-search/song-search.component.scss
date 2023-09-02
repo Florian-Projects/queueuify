@@ -1,0 +1,10 @@
+$search-bar-height: 78px;
+.search-bar {
+  margin: 10px;
+  display: flex;
+  height: $search-bar-height;
+
+  .input {
+    width: 100%;
+  }
+}

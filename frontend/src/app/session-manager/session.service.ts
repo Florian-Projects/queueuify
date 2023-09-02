@@ -106,4 +106,21 @@ export class SessionService {
       )
       .subscribe(() => this.fetchSessionState());
   }
+
+  addSongToQueue(uri: string): void {
+    let session_key = localStorage.getItem('session_key');
+    this.http
+      .put<any>(
+        SessionService.API +
+          '/session/' +
+          this.sessionState.sessionToken +
+          '/queue',
+        {},
+        {
+          headers: { Authorization: 'Bearer ' + session_key },
+          params: { song_id: uri },
+        },
+      )
+      .subscribe();
+  }
 }
