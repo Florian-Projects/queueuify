@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { SpotifyTrack } from '../song-search/song-search.service';
 import { BehaviorSubject, map, Observable, startWith, switchMap } from 'rxjs';
-import { sessionQueue, SessionService, sessionState } from '../session.service';
+import { SessionService } from '../session.service';
+import { sessionQueue, sessionState } from '../session-manager.interfaces';
 
 @Component({
   selector: 'app-sesion-queue',

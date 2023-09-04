@@ -1,6 +1,6 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, pipe, tap } from 'rxjs';
+import { catchError, Observable, pipe, tap, throwError } from 'rxjs';
 import { environment } from '../environments/environments';
 
 export interface LoginResponse {
@@ -49,17 +49,16 @@ export class LoginService {
   }
 
   logout(): Observable<{}> {
-    let session_token = localStorage.getItem('session_key');
-    localStorage.removeItem('session_key');
     return this.http
-      .get<{}>(environment.apiURL + '/logout', {
-        headers: { Authorization: 'Bearer ' + session_token },
-      })
+      .get<{}>(environment.apiURL + '/logout')
       .pipe(this.alert_on_error('Failed to login'));
   }
   private alert_on_error(message: string): any {
     return pipe(
-      tap({ error: (e) => alert(`${message}: ${JSON.stringify(e)}`) }),
+      catchError((error: any) => {
+        alert(`${message}: ${JSON.stringify(error)}`);
+        return throwError(error); // Re-throw the error so subscribers can handle it if they want
+      }),
     );
   }
 }

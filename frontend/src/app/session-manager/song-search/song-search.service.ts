@@ -41,10 +41,9 @@ export class SongSearchService {
   constructor(private http: HttpClient) {}
 
   list(query = ''): Observable<SpotifyTrackResponse> {
-    let session_token = localStorage.getItem('session_key');
     return this.http.get<SpotifyTrackResponse>(
-      environment.apiURL + '/spotify/search' + '?song_name=' + query,
-      { headers: { Authorization: 'Bearer ' + session_token } },
+      environment.apiURL + '/spotify/search',
+      { params: { song_name: query } },
     );
   }
 }

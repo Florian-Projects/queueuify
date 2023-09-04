@@ -1,10 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import {
-  SessionService,
-  sessionState,
-} from '../session-manager/session.service';
+import { SessionService } from '../session-manager/session.service';
 import { MatDialog } from '@angular/material/dialog';
 import { JoinSessionDialogComponent } from '../join-session-dialog/join-session-dialog.component';
+import { sessionState } from '../session-manager/session-manager.interfaces';
 
 @Component({
   selector: 'app-menubar',

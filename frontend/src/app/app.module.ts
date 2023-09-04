@@ -9,7 +9,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MenubarComponent } from './menubar/menubar.component';
-import { HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { OauthCallbackComponent } from './oauth-callback/oauth-callback.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SessionManagerComponent } from './session-manager/session-manager.component';
@@ -23,6 +23,7 @@ import { SongComponent } from './session-manager/song/song.component';
 import { MatCardModule } from '@angular/material/card';
 import { UserComponent } from './session-manager/member-management/user/user.component';
 import { MemberManagemetComponent } from './session-manager/member-management/member-managemet.component';
+import { AuthInterceptor } from './auth.interceptor';
 
 @NgModule({
   declarations: [
@@ -52,7 +53,9 @@ import { MemberManagemetComponent } from './session-manager/member-management/me
     FormsModule,
     MatCardModule,
   ],
-  providers: [],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+  ],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

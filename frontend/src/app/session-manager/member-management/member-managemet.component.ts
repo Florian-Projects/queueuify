@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { BehaviorSubject, map, Observable, startWith, switchMap } from 'rxjs';
 import { SpotifyTrack } from '../song-search/song-search.service';
-import { SessionService, user } from '../session.service';
+import { SessionService } from '../session.service';
+import { user } from '../session-manager.interfaces';
 
 @Component({
   selector: 'app-member-management',
