@@ -13,15 +13,17 @@ from tortoise import exceptions
 from tortoise.contrib.fastapi import register_tortoise
 
 from authentication import BearerAuthBackend
-from session import session
-from spotify import spotify
+from config.settings import get_settings
 from models import User, APIToken, OAuthCodeRequest
 from oauth.oauth import spotify_oauth
+from session import session
+from spotify import spotify
 from spotify_connector.spotify import SpotifyConnector
 
 utc = pytz.utc
 
-app = FastAPI()
+settings = get_settings()
+app = FastAPI(root_path=settings.root_path)
 
 app.add_middleware(
     CORSMiddleware,
@@ -94,7 +96,7 @@ async def log_out(request: Request):
 
 register_tortoise(
     app,
-    db_url="mysql://docker:docker@127.0.0.1:3306/docker",
+    db_url=f"mysql://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.db_port}/{settings.db_name}",
     modules={"models": ["models", "session.models"]},
     generate_schemas=True,
     add_exception_handlers=True,
