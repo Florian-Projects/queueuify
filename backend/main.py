@@ -94,10 +94,6 @@ async def log_out(request: Request):
     return {}
 
 
-print(settings)
-print(
-    f"mysql://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.db_port}/{settings.db_name}"
-)
 register_tortoise(
     app,
     db_url=f"mysql://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.db_port}/{settings.db_name}",
