@@ -1,0 +1,9 @@
+<ng-container *ngIf="users$ | async as users; else loadingSpinner">
+  <mat-card *ngFor="let user of users; let i = index">
+    <mat-card-title>{{ user.display_name }}</mat-card-title>
+  </mat-card>
+</ng-container>
+
+<ng-template #loadingSpinner>
+  <mat-spinner></mat-spinner>
+</ng-template>

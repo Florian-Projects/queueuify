@@ -21,6 +21,8 @@ import { SesionQueueComponent } from './session-manager/sesion-queue/sesion-queu
 import { FormsModule } from '@angular/forms';
 import { SongComponent } from './session-manager/song/song.component';
 import { MatCardModule } from '@angular/material/card';
+import { UserComponent } from './session-manager/member-management/user/user.component';
+import { MemberManagemetComponent } from './session-manager/member-management/member-managemet.component';
 
 @NgModule({
   declarations: [
@@ -32,6 +34,8 @@ import { MatCardModule } from '@angular/material/card';
     SongSearchComponent,
     SesionQueueComponent,
     SongComponent,
+    UserComponent,
+    MemberManagemetComponent,
   ],
   imports: [
     BrowserModule,

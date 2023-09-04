@@ -21,6 +21,11 @@ export interface sessionQueue {
   queue: Array<SpotifyTrack>;
 }
 
+export interface user {
+  id: string;
+  display_name: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -113,6 +118,13 @@ export class SessionService {
         },
       )
       .subscribe(() => this.fetchSessionState());
+  }
+
+  getSessionMembers(): Observable<Array<user>> {
+    let session_key = localStorage.getItem('session_key');
+    return this.http.get<Array<user>>(SessionService.API + '/session/members', {
+      headers: { Authorization: 'Bearer ' + session_key },
+    });
   }
 
   addSongToQueue(uri: string): void {

@@ -1,0 +1,9 @@
+<button
+  (click)="refresh$.next('')"
+  style="margin-bottom: 10px"
+  color="accent"
+  mat-raised-button
+>
+  Refresh
+</button>
+<app-user [users$]="users$"></app-user>

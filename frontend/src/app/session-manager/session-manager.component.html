@@ -9,5 +9,7 @@
   <mat-tab label="Queue">
     <app-sesion-queue></app-sesion-queue>
   </mat-tab>
-  <mat-tab label="Active Session"> Content 1 </mat-tab>
+  <mat-tab *ngIf="sessionState.isOwner" label="Session Member">
+    <app-member-management></app-member-management>
+  </mat-tab>
 </mat-tab-group>

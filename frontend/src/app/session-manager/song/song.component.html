@@ -1,11 +1,13 @@
 <ng-container *ngIf="songs$ | async as songs; else loadingSpinner">
   <mat-card *ngFor="let song of songs; let i = index">
-    <mat-card-content style="margin: 2px" *ngIf="!queuingEnabled">{{i + 1}}.</mat-card-content>
+    <mat-card-content style="margin: 2px" *ngIf="!queuingEnabled"
+      >{{ i + 1 }}.</mat-card-content
+    >
     <mat-card-header>
       <mat-card-title-group>
         <mat-card-title>{{ song.name }}</mat-card-title>
         <mat-card-subtitle>{{ song.artists[0].name }}</mat-card-subtitle>
-        <img mat-card-sm-image src="{{ song.album?.images?.[0]?.url }}"/>
+        <img mat-card-sm-image src="{{ song.album?.images?.[0]?.url }}" />
       </mat-card-title-group>
     </mat-card-header>
     <mat-card-actions *ngIf="queuingEnabled">

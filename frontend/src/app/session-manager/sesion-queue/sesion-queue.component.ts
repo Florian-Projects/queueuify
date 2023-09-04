@@ -26,8 +26,4 @@ export class SesionQueueComponent implements OnInit {
       ),
       map((response) => response?.queue),
     );
-  protected onRefresh() {
-    this.songs$.subscribe(console.log);
-    this.refresh$.next('');
-  }
 }
