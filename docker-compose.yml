@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  frontend:
+    image: ghcr.io/florian-projects/queueuify/queueify-frontend:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SERVER_NAME: ${FRONTEND_SERVER_NAME}
+    volumes:
+      - ./certificates:/etc/nginx/ssl
+
+  backend:
+    image: ghcr.io/florian-projects/queueuify/queueify-backend:latest
+    ports:
+      - "8000:8000"
+    environment:
+      spotify_client_id: ${spotify_client_id}
+      spotify_client_secret: ${spotify_client_secret}
+      redirect_uri: ${redirect_uri}
+      root_path: ${root_path}
+
+      db_user: ${DB_USER}
+      db_password: ${DB_PASSWORD}
+      db_host: "db"
+      db_port: 3306
+      db_name: ${DB_NAME}
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+volumes:
+  mariadb_data:
