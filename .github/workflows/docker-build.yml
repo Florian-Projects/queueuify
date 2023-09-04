@@ -27,7 +27,7 @@ jobs:
       with:
         context: ./frontend
         push: true
-        tags: queueify-frontend:latest
+        tags: ghcr.io/florian-projects/queueify-frontend:latest
 
     - name: Build and push backend Docker image
       uses: docker/build-push-action@v4.1.1
@@ -35,4 +35,4 @@ jobs:
         context: ./backend
         file: ./backend/Dockerfile
         push: true
-        tags: queueify-backend:latest
+        tags: ghcr.io/florian-projects/queueify-backend:latest
