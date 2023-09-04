@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   frontend:
-    image: ghcr.io/florian-projects/queueuify/queueify-frontend:latest
+    build: ./frontend
+    # image: ghcr.io/florian-projects/queueuify/queueify-frontend:latest
     ports:
       - "80:80"
       - "443:443"
@@ -10,9 +11,12 @@ services:
       SERVER_NAME: ${FRONTEND_SERVER_NAME}
     volumes:
       - ./certificates:/etc/nginx/ssl
+    depends_on:
+      - backend
 
   backend:
-    image: ghcr.io/florian-projects/queueuify/queueify-backend:latest
+    build: ./backend
+   #  image: ghcr.io/florian-projects/queueuify/queueify-backend:latest
     ports:
       - "8000:8000"
     environment:
@@ -28,18 +32,21 @@ services:
       db_name: ${DB_NAME}
     depends_on:
       - db
-
+    expose:
+      - 8000
   db:
     image: mariadb:latest
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
     volumes:
       - mariadb_data:/var/lib/mysql
     expose:
       - 3306
+    ports:
+      - "3306:3306"
 
 volumes:
   mariadb_data:
