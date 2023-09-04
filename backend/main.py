@@ -1,11 +1,9 @@
 from datetime import datetime, timedelta
-from functools import lru_cache
 from secrets import token_urlsafe
 
 import pytz
 import uvicorn
 from fastapi import FastAPI, Request
-from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.authentication import (
     requires,
@@ -15,24 +13,12 @@ from tortoise import exceptions
 from tortoise.contrib.fastapi import register_tortoise
 
 from authentication import BearerAuthBackend
-from config.settings import Settings
 from session import session
 from spotify import spotify
 from models import User, APIToken, OAuthCodeRequest
-from oauth.oauth import SpotifyOAuth
+from oauth.oauth import spotify_oauth
 from spotify_connector.spotify import SpotifyConnector
 
-
-@lru_cache()
-def get_settings():
-    return Settings()
-
-
-spotify_oauth = SpotifyOAuth(
-    client_id=get_settings().spotify_client_id,
-    client_secret=get_settings().spotify_client_secret,
-    redirect_uri=get_settings().redirect_uri,
-)
 utc = pytz.utc
 
 app = FastAPI()
@@ -56,8 +42,7 @@ def status():
 
 
 @app.get("/login")
-async def login():
-    state = "my_random_state"
+async def login(state: str):
     authorization_url = await spotify_oauth.get_authorization_url(
         state,
         scope="user-read-currently-playing user-modify-playback-state user-read-playback-state",
@@ -68,9 +53,9 @@ async def login():
 
 @app.post("/exchange_oauth_code")
 async def oauth_callback(body: OAuthCodeRequest):
-    access_token, refresh_token = await spotify_oauth.get_access_token(body.code)
+    access_token, refresh_token = await spotify_oauth.exchange_code_for_token(body.code)
 
-    spotify_connector = SpotifyConnector(access_token)
+    spotify_connector = await SpotifyConnector.create(access_token=access_token)
     user = await spotify_connector.get_current_user_detail()
 
     try:
@@ -100,7 +85,7 @@ async def oauth_callback(body: OAuthCodeRequest):
 @app.get("/logout")
 @requires("authenticated")
 async def log_out(request: Request):
-    await request.user.get_session_token.delete()
+    await request.user.delete()
     return {}
 
 

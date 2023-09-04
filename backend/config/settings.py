@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -7,3 +9,8 @@ class Settings(BaseSettings):
     redirect_uri: str = "http://127.0.0.1:4200/oauth_callback"
 
     model_config = SettingsConfigDict(env_file=".env")
+
+
+@lru_cache()
+def get_settings():
+    return Settings()

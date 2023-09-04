@@ -9,6 +9,16 @@ export interface LoginResponse {
   providedIn: 'root',
 })
 export class LoginService {
+  private static getRandomState() {
+    const array = new Uint32Array(32);
+    window.crypto.getRandomValues(array);
+
+    const possibleCharacters =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    return Array.from(array)
+      .map((val) => possibleCharacters[val % possibleCharacters.length])
+      .join('');
+  }
   loggedIn: boolean = false;
   loggedInChanged: EventEmitter<boolean> = new EventEmitter<boolean>();
 
@@ -16,15 +26,25 @@ export class LoginService {
   constructor(private readonly http: HttpClient) {
     this.loggedIn = !!localStorage.getItem('session_key');
   }
-
+  private setState() {
+    sessionStorage.setItem('oauthState', LoginService.getRandomState());
+  }
+  getState(): string {
+    const state: string | null = sessionStorage.getItem('oauthState');
+    return state !== null ? state : '';
+  }
   // Method to update the login state
   setLoggedIn(value: boolean) {
     this.loggedIn = value;
     this.loggedInChanged.emit(this.loggedIn);
   }
   login(): Observable<LoginResponse> {
+    this.setState();
+    const state = this.getState();
     return this.http
-      .get<LoginResponse>(LoginService.API + '/login')
+      .get<LoginResponse>(LoginService.API + '/login', {
+        params: { state: state },
+      })
       .pipe(this.alert_on_error('Failed to login'));
   }
 

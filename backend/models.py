@@ -24,7 +24,7 @@ class APIToken(models.Model):
     is_session_token = fields.BooleanField(default=False)
 
     expiration_time = fields.DatetimeField(
-        default=datetime.utcnow() + timedelta(hours=1), null=True
+        default=datetime.utcnow() + timedelta(hours=24), null=True
     )
 
     class Meta:

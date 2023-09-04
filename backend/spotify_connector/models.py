@@ -45,3 +45,8 @@ class SpotifyTrackList(BaseModel):
 
 class SpotifyTrackResponse(BaseModel):
     tracks: Optional[SpotifyTrackList]
+
+
+class SessionQueueResponse(BaseModel):
+    currently_playing: SpotifyTrack
+    queue: List[SpotifyTrack]

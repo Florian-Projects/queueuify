@@ -161,9 +161,10 @@ async def add_song_to_session_queue(request: Request, token: str, song_id: str):
             content={"detail": "User is not a member of the session"},
         )
 
-    connector = SpotifyConnector(session_owner.access_token)
+    connector = await SpotifyConnector.create(user=session_owner)
     success = await connector.add_song_to_queue(song_id)
     return {"Success": success}
+
 
 @router.get("/{token}/queue")
 @requires(["authenticated"])
@@ -183,15 +184,19 @@ async def get_queue_content(request: Request, token: str):
             content={"detail": "User is not a member of the session"},
         )
 
-    spotify_connector = SpotifyConnector(session_owner.access_token)
+    spotify_connector = await SpotifyConnector.create(user=session_owner)
     return await spotify_connector.get_current_queue()
+
 
 @router.get("/members")
 @requires(["authenticated"])
 async def get_session_member(request: Request):
     session = await request.user.owned_session
     if session is None:
-        return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"details": "User is not the owner of any session"})
-     
+        return JSONResponse(
+            status_code=HTTPStatus.NOT_FOUND,
+            content={"details": "User is not the owner of any session"},
+        )
+
     members = await session.members.all()
     return [{"id": user.id, "display_name": user.display_name} for user in members]
