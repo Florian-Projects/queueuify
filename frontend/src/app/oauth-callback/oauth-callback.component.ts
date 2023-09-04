@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { LoginService } from '../login.service';
+import { environment } from '../../environments/environments';
 
 @Component({
   selector: 'app-oauth-callback',
@@ -22,7 +23,7 @@ export class OauthCallbackComponent implements OnInit {
       const state = params['state'];
       if (state === this.loginService.getState()) {
         this.http
-          .post('http://127.0.0.1:8000/exchange_oauth_code', { code, state })
+          .post(environment.apiURL + '/exchange_oauth_code', { code, state })
           .subscribe((response: any) => {
             localStorage.setItem('session_key', response.api_token);
             this.loginService.setLoggedIn(true);

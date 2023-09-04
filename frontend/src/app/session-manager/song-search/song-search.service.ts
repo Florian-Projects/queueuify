@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environments';
 
 interface SpotifyAlbum {
   href?: string | null;
@@ -37,13 +38,12 @@ export interface SpotifyTrackResponse {
   providedIn: 'root',
 })
 export class SongSearchService {
-  private static readonly API = 'http://localhost:8000';
   constructor(private http: HttpClient) {}
 
   list(query = ''): Observable<SpotifyTrackResponse> {
     let session_token = localStorage.getItem('session_key');
     return this.http.get<SpotifyTrackResponse>(
-      SongSearchService.API + '/spotify/search' + '?song_name=' + query,
+      environment.apiURL + '/spotify/search' + '?song_name=' + query,
       { headers: { Authorization: 'Bearer ' + session_token } },
     );
   }

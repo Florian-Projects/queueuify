@@ -1,6 +1,7 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, pipe, tap } from 'rxjs';
+import { environment } from '../environments/environments';
 
 export interface LoginResponse {
   authorization_url: string;
@@ -22,7 +23,6 @@ export class LoginService {
   loggedIn: boolean = false;
   loggedInChanged: EventEmitter<boolean> = new EventEmitter<boolean>();
 
-  private static readonly API = 'http://localhost:8000';
   constructor(private readonly http: HttpClient) {
     this.loggedIn = !!localStorage.getItem('session_key');
   }
@@ -42,7 +42,7 @@ export class LoginService {
     this.setState();
     const state = this.getState();
     return this.http
-      .get<LoginResponse>(LoginService.API + '/login', {
+      .get<LoginResponse>(environment.apiURL + '/login', {
         params: { state: state },
       })
       .pipe(this.alert_on_error('Failed to login'));
@@ -52,7 +52,7 @@ export class LoginService {
     let session_token = localStorage.getItem('session_key');
     localStorage.removeItem('session_key');
     return this.http
-      .get<{}>(LoginService.API + '/logout', {
+      .get<{}>(environment.apiURL + '/logout', {
         headers: { Authorization: 'Bearer ' + session_token },
       })
       .pipe(this.alert_on_error('Failed to login'));

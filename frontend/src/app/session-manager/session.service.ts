@@ -2,6 +2,7 @@ import { EventEmitter, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { SpotifyTrack } from './song-search/song-search.service';
+import { environment } from '../../environments/environments';
 
 export interface SessionResponse {
   is_owner: boolean;
@@ -30,7 +31,6 @@ export interface user {
   providedIn: 'root',
 })
 export class SessionService {
-  private static readonly API = 'http://127.0.0.1:8000';
   sessionChanged: EventEmitter<sessionState> = new EventEmitter<sessionState>();
 
   private sessionState: sessionState = {
@@ -49,7 +49,7 @@ export class SessionService {
   fetchSessionState() {
     let session_key = localStorage.getItem('session_key');
     this.http
-      .get<SessionResponse>(SessionService.API + '/session', {
+      .get<SessionResponse>(environment.apiURL + '/session', {
         headers: { Authorization: 'Bearer ' + session_key },
       })
       .subscribe({
@@ -76,7 +76,7 @@ export class SessionService {
     let session_key = localStorage.getItem('session_key');
     this.http
       .post<any>(
-        SessionService.API + '/session',
+        environment.apiURL + '/session',
         {},
         {
           headers: { Authorization: 'Bearer ' + session_key },
@@ -88,7 +88,7 @@ export class SessionService {
   deleteSession(): void {
     let session_key = localStorage.getItem('session_key');
     this.http
-      .delete<any>(SessionService.API + '/session', {
+      .delete<any>(environment.apiURL + '/session', {
         headers: { Authorization: 'Bearer ' + session_key },
       })
       .subscribe(() => this.fetchSessionState());
@@ -98,7 +98,7 @@ export class SessionService {
     let session_key = localStorage.getItem('session_key');
     this.http
       .post<any>(
-        SessionService.API + '/session/' + sessionToken + '/join',
+        environment.apiURL + '/session/' + sessionToken + '/join',
         {},
         {
           headers: { Authorization: 'Bearer ' + session_key },
@@ -111,7 +111,7 @@ export class SessionService {
     let session_key = localStorage.getItem('session_key');
     this.http
       .post<any>(
-        SessionService.API + '/session/' + sessionToken + '/leave',
+        environment.apiURL + '/session/' + sessionToken + '/leave',
         {},
         {
           headers: { Authorization: 'Bearer ' + session_key },
@@ -122,7 +122,7 @@ export class SessionService {
 
   getSessionMembers(): Observable<Array<user>> {
     let session_key = localStorage.getItem('session_key');
-    return this.http.get<Array<user>>(SessionService.API + '/session/members', {
+    return this.http.get<Array<user>>(environment.apiURL + '/session/members', {
       headers: { Authorization: 'Bearer ' + session_key },
     });
   }
@@ -131,7 +131,7 @@ export class SessionService {
     let session_key = localStorage.getItem('session_key');
     this.http
       .put<any>(
-        SessionService.API +
+        environment.apiURL +
           '/session/' +
           this.sessionState.sessionToken +
           '/queue',
@@ -147,7 +147,7 @@ export class SessionService {
   getQueue(): Observable<sessionQueue> {
     let session_key = localStorage.getItem('session_key');
     return this.http.get<sessionQueue>(
-      SessionService.API +
+      environment.apiURL +
         '/session/' +
         this.sessionState.sessionToken +
         '/queue',
