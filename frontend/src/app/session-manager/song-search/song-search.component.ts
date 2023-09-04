@@ -1,11 +1,6 @@
 import { Component } from '@angular/core';
 import { BehaviorSubject, map, Observable, startWith, switchMap } from 'rxjs';
-import {
-  SongSearchService,
-  SpotifyTrack,
-  SpotifyTrackList,
-  SpotifyTrackResponse,
-} from './song-search.service';
+import { SongSearchService, SpotifyTrack } from './song-search.service';
 
 @Component({
   selector: 'app-song-search',
@@ -14,6 +9,7 @@ import {
 })
 export class SongSearchComponent {
   constructor(private readonly songService: SongSearchService) {}
+
   protected query$ = new BehaviorSubject('');
 
   protected songs$: Observable<Array<SpotifyTrack> | undefined> =

@@ -1,5 +1,3 @@
-<body class="mat-app-background">
-  <app-menubar [loggedIn]="loggedIn" (login)="onLogin($event)"></app-menubar>
-  <app-session-manager *ngIf="loggedIn"></app-session-manager>
-  <router-outlet></router-outlet>
-</body>
+<app-menubar [loggedIn]="loggedIn" (login)="onLogin($event)"></app-menubar>
+<app-session-manager *ngIf="loggedIn"></app-session-manager>
+<router-outlet></router-outlet>

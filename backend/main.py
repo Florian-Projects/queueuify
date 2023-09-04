@@ -59,7 +59,8 @@ def status():
 async def login():
     state = "my_random_state"
     authorization_url = await spotify_oauth.get_authorization_url(
-        state, scope="user-read-currently-playing user-modify-playback-state"
+        state,
+        scope="user-read-currently-playing user-modify-playback-state user-read-playback-state",
     )
     print(authorization_url)
     return {"authorization_url": str(authorization_url)}

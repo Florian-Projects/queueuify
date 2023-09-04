@@ -164,3 +164,24 @@ async def add_song_to_session_queue(request: Request, token: str, song_id: str):
     connector = SpotifyConnector(session_owner.access_token)
     success = await connector.add_song_to_queue(song_id)
     return {"Success": success}
+
+@router.get("/{token}/queue")
+@requires(["authenticated"])
+async def get_queue_content(request: Request, token: str):
+    try:
+        session = await GroupSession.get(token=token)
+    except DoesNotExist:
+        return JSONResponse(
+            status_code=HTTPStatus.NOT_FOUND.value,
+            content={"detail": "Session not found"},
+        )
+
+    session_owner = await session.owner.first()
+    if request.user not in await session.members and request.user != session_owner:
+        return JSONResponse(
+            status_code=HTTPStatus.FORBIDDEN,
+            content={"detail": "User is not a member of the session"},
+        )
+
+    spotify_connector = SpotifyConnector(session_owner.access_token)
+    return await spotify_connector.get_current_queue()

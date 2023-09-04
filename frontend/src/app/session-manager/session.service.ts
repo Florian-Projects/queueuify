@@ -1,5 +1,7 @@
 import { EventEmitter, Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { SpotifyTrack } from './song-search/song-search.service';
 
 export interface SessionResponse {
   is_owner: boolean;
@@ -14,6 +16,11 @@ export interface sessionState {
   isOwner: boolean;
 }
 
+export interface sessionQueue {
+  currently_playing: SpotifyTrack;
+  queue: Array<SpotifyTrack>;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -26,6 +33,7 @@ export class SessionService {
     sessionToken: null,
     isOwner: false,
   };
+
   constructor(private http: HttpClient) {}
 
   getSessionState(): sessionState {
@@ -122,5 +130,16 @@ export class SessionService {
         },
       )
       .subscribe();
+  }
+
+  getQueue(): Observable<sessionQueue> {
+    let session_key = localStorage.getItem('session_key');
+    return this.http.get<sessionQueue>(
+      SessionService.API +
+        '/session/' +
+        this.sessionState.sessionToken +
+        '/queue',
+      { headers: { Authorization: 'Bearer ' + session_key } },
+    );
   }
 }

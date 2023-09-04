@@ -19,7 +19,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { SongSearchComponent } from './session-manager/song-search/song-search.component';
 import { SesionQueueComponent } from './session-manager/sesion-queue/sesion-queue.component';
 import { FormsModule } from '@angular/forms';
-import { SongComponent } from './session-manager/song-search/song/song.component';
+import { SongComponent } from './session-manager/song/song.component';
 import { MatCardModule } from '@angular/material/card';
 
 @NgModule({

@@ -1,4 +1,3 @@
-import json
 from http import HTTPStatus
 
 import httpx
@@ -6,6 +5,7 @@ import httpx
 from spotify_connector.models import (
     UserDetailResponse,
     SongSearchResponse,
+    SpotifyTrack,
     SpotifyTrackResponse,
 )
 
@@ -35,3 +35,13 @@ class SpotifyConnector:
         )
         return SpotifyTrackResponse(**response.json())
         return SongSearchResponse(**response.json())
+
+    async def get_current_queue(self):
+        response = await self.client.get("/me/player/queue")
+        print(response.json())
+        return {
+            "currently_playing": SpotifyTrack(**response.json()["currently_playing"]).model_dump(),
+            "queue": [SpotifyTrack(**item).model_dump() for item in response.json()["queue"]],
+
+        }
+

@@ -1,1 +1,13 @@
-<p>sesion-queue works!</p>
+<button
+  (click)="onRefresh()"
+  style="margin-bottom: 10px"
+  color="accent"
+  mat-raised-button
+>
+  Refresh Queue
+</button>
+<app-song
+  [queuingEnabled]="false"
+  [removalEnabled]="sessionState.isOwner"
+  [songs$]="songs$"
+></app-song>
