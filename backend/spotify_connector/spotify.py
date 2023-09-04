@@ -27,7 +27,7 @@ class SpotifyConnector:
             raise Exception("Usse the create factory")
 
         self.client = client
-        self.usser = user
+        self.user = user
         self.access_token = access_token
 
     @classmethod
@@ -54,12 +54,15 @@ class SpotifyConnector:
                 self.user.refresh_token
             )
             self.user.access_token = access_token
-            self.user.refresh_token = refresh_token
-            await self.user.save(update_fields=["acces_token", "refresh_token"])
+            if refresh_token:
+                self.user.refresh_token = refresh_token
+                await self.user.save(update_fields=["access_token", "refresh_token"])
+            else:
+                await self.user.save(update_fields=["access_token"])
 
         else:
             self.access_token = spotify_oauth.get_authorization_url()
-
+        self.access_token = access_token
         self.client.headers["Authorization"] = f"Bearer {self.access_token}"
 
     async def send_reqeust(
@@ -70,10 +73,10 @@ class SpotifyConnector:
     ):
         response = await self.client.request(*args, **kwargs)
         if response.status_code == HTTPStatus.UNAUTHORIZED.value:
-            self._refresh_authentication()
+            await self._refresh_authentication()
             # retry only once with the new token
             if not already_tried:
-                response = await self.send_reqeust(*args, **kwargs, already_tried=True)
+                return await self.send_reqeust(*args, **kwargs, already_tried=True)
 
         if response.status_code >= 300:
             raise SpotifyException(
@@ -102,7 +105,7 @@ class SpotifyConnector:
         return SpotifyTrackResponse(**response.json())
 
     async def get_current_queue(self):
-        response = await self.client.request(method="get", url="/me/player/queue")
+        response = await self.send_reqeust(method="get", url="/me/player/queue")
         data = {
             "currently_playing": SpotifyTrack(
                 **response.json()["currently_playing"]

@@ -1,7 +1,7 @@
-import {Component, OnInit} from '@angular/core';
-import {LoginService} from './login.service';
-import {Observable} from 'rxjs';
-import {SessionService} from "./session-manager/session.service";
+import { Component, OnInit } from '@angular/core';
+import { LoginService } from './login.service';
+import { Observable } from 'rxjs';
+import { SessionService } from './session-manager/session.service';
 
 @Component({
   selector: 'app-root',
@@ -12,8 +12,10 @@ export class AppComponent implements OnInit {
   title = 'frontend';
   protected loggedIn: boolean = false;
 
-  constructor(private readonly loginService: LoginService, private sessionService: SessionService) {
-  }
+  constructor(
+    private readonly loginService: LoginService,
+    private sessionService: SessionService,
+  ) {}
 
   ngOnInit() {
     this.loggedIn = this.loginService.loggedIn;
@@ -22,7 +24,7 @@ export class AppComponent implements OnInit {
     });
   }
 
-  protected onLogin({type}: { type: string }): void {
+  protected onLogin({ type }: { type: string }): void {
     if (type === 'login') {
       this.loginService
         .login()
@@ -30,17 +32,21 @@ export class AppComponent implements OnInit {
     } else {
       this.loginService.logout().subscribe({
         next: (value) => {
-          localStorage.removeItem("session_key");
-          this.sessionService.sessionChanged.emit({sessionToken: "", isInSession: false, isOwner: false});
+          localStorage.removeItem('session_key');
+          this.sessionService.sessionChanged.emit({
+            sessionToken: '',
+            isInSession: false,
+            isOwner: false,
+          });
           this.loginService.setLoggedIn(false);
         },
         error: (error) => {
           if (error.status === 403) {
-            localStorage.removeItem("session_key");
+            localStorage.removeItem('session_key');
             this.sessionService.sessionChanged.emit();
           }
-        }
+        },
       });
     }
-  };
+  }
 }

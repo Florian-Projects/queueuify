@@ -73,18 +73,20 @@ class SpotifyOAuth:
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 self.token_url,
-                headers={"Authorization": f"Basic {self.basic_authorization_token}"},
+                headers={
+                    "Authorization": f"Basic {self.basic_authorization_token}",
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
                 data={
-                    "grant_type": "authorization_code",
-                    "code": refresh_token,
-                    "redirect_uri": self.redirect_uri,
+                    "grant_type": "refresh_token",
+                    "refresh_token": refresh_token,
                 },
             )
             if response.status_code != 200:
                 raise HTTPException(
                     status_code=400, detail="Failed to retrieve access token"
                 )
-            return response.json()["access_token"], response.json()["refresh_token"]
+            return response.json()["access_token"], response.json().get("refresh_token")
 
 
 spotify_oauth = SpotifyOAuth(

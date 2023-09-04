@@ -25,7 +25,11 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200", "http://127.0.0.1:4200"],
+    allow_origins=[
+        "http://localhost:4200",
+        "http://127.0.0.1:4200",
+        "http://192.168.2.57:4200",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -47,7 +51,6 @@ async def login(state: str):
         state,
         scope="user-read-currently-playing user-modify-playback-state user-read-playback-state",
     )
-    print(authorization_url)
     return {"authorization_url": str(authorization_url)}
 
 
