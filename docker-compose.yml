@@ -38,6 +38,8 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - mariadb_data:/var/lib/mysql
+    expose:
+      - 3306
 
 volumes:
   mariadb_data:
