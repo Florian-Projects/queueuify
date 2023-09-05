@@ -17,8 +17,6 @@ services:
   backend:
     # build: ./backend
     image: ghcr.io/florian-projects/queueuify/queueify-backend:latest
-    ports:
-      - "8000:8000"
     environment:
       spotify_client_id: ${spotify_client_id}
       spotify_client_secret: ${spotify_client_secret}
