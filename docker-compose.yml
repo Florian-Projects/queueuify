@@ -2,8 +2,8 @@ version: '3.8'
 
 services:
   frontend:
-    build: ./frontend
-    # image: ghcr.io/florian-projects/queueuify/queueify-frontend:latest
+    # build: ./frontend
+    image: ghcr.io/florian-projects/queueuify/queueify-frontend:latest
     ports:
       - "80:80"
       - "443:443"
@@ -15,8 +15,8 @@ services:
       - backend
 
   backend:
-    build: ./backend
-   #  image: ghcr.io/florian-projects/queueuify/queueify-backend:latest
+    # build: ./backend
+    image: ghcr.io/florian-projects/queueuify/queueify-backend:latest
     ports:
       - "8000:8000"
     environment:
