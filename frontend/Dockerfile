@@ -4,13 +4,15 @@ FROM node:20.5.1 as build
 # Set the working directory in the container
 WORKDIR /app
 
-COPY . .
 
+COPY ./package.json .
+COPY ./package-lock.json .
 # Install Angular CLI and the project's dependencies
 RUN npm install -g @angular/cli && npm install
 
+COPY . .
 # Build the Angular app for production
-RUN ng build --configuration production
+RUN ng build --configuration production --source-map=true
 
 # Use the official NGINX image to serve the Angular app
 FROM nginx:alpine
