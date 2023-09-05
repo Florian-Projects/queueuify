@@ -17,15 +17,19 @@ RUN apt-get update \
 # Install Poetry
 RUN pip install "poetry==$POETRY_VERSION"
 
-# Copy the rest of the application to the container
-COPY . /app/
+COPY ./pyproject.toml .
+COPY ./poetry.lock .
+COPY ./poetry.toml .
 
 # Project initialization:
 RUN python -m poetry config virtualenvs.create false
 RUN python -m poetry install --without dev --no-interaction --no-ansi
 
+# Copy the rest of the application to the container
+COPY . /app/
+
 # Expose the port the app runs on
 EXPOSE 8000
 
 # Command to run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--ssl-keyfile", "/certificates/server.key", "--ssl-certfile", "/certificates/server.crt"]

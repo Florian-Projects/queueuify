@@ -14,12 +14,12 @@ from spotify_connector.spotify import SpotifyConnector
 router = APIRouter()
 
 
-@router.get("/")
+@router.get("")
 @requires(["authenticated"])
 async def get_session(request: Request):
     if owned_session := await request.user.owned_session:
         session_dict = await PGroupSession.from_tortoise_orm(owned_session)
-        session_dict = session_dict.dict()
+        session_dict = session_dict.model_dump()
         return {"is_owner": True, **session_dict}
 
     if joined_session := await GroupSession.filter(members=request.user).first():
@@ -33,7 +33,7 @@ async def get_session(request: Request):
 
 
 @router.post(
-    "/",
+    "",
     response_model=PGroupSession,
     responses={
         HTTPStatus.CONFLICT.value: {
@@ -68,7 +68,7 @@ async def create_session(request: Request):
 
 
 @router.delete(
-    "/",
+    "",
     responses={
         HTTPStatus.NOT_FOUND.value: {
             "description": "The User has no active session",
