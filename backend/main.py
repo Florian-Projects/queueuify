@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timedelta
 from secrets import token_urlsafe
 
@@ -57,6 +58,21 @@ def status():
 
 @app.get("/login")
 async def login(state: str):
+    if state == "anonymous":
+        db_user = await User.create(
+            display_name=str(uuid.uuid4()),
+        )
+
+        db_token, created = await APIToken.update_or_create(
+            owner=db_user,
+            is_session_token=True,
+            defaults={
+                "token": token_urlsafe(32),
+                "expiration_time": datetime.utcnow() + timedelta(hours=1),
+            },
+        )
+        return {"api_token": db_token.token}
+
     authorization_url = await spotify_oauth.get_authorization_url(
         state,
         scope="user-read-currently-playing user-modify-playback-state user-read-playback-state",

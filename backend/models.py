@@ -5,11 +5,13 @@ from tortoise import models, fields
 
 
 class User(models.Model):
-    external_user_id = fields.CharField(max_length=255, unique=True)
+    external_user_id = fields.CharField(max_length=255, unique=True, null=True)
     display_name = fields.CharField(max_length=255)
-    access_token = fields.CharField(max_length=255)
-    refresh_token = fields.CharField(max_length=255)
+    access_token = fields.CharField(max_length=255, null=True)
+    refresh_token = fields.CharField(max_length=255, null=True)
     deactivated = fields.BooleanField(default=False)
+
+    groupsessions = fields.ReverseRelation["GroupSession"]
 
     @property
     def get_session_token(self):

@@ -29,7 +29,10 @@ export class AppComponent implements OnInit {
       this.loginService
         .login()
         .subscribe((value) => (location.href = value.authorization_url));
-    } else {
+    } else if (type === 'anonymous') {
+      this.loginService.loginAnonymous()
+    }
+    else {
       this.loginService.logout().subscribe({
         next: (value) => {
           localStorage.removeItem('session_key');

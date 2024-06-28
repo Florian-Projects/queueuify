@@ -119,7 +119,7 @@ async def join_session(request: Request, token: str):
 
 @router.post("/{token}/leave")
 @requires(["authenticated"])
-async def join_session(request: Request, token: str):
+async def leave_session(request: Request, token: str):
     try:
         session = await GroupSession.get(token=token)
     except DoesNotExist:

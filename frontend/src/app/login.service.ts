@@ -47,6 +47,20 @@ export class LoginService {
       })
       .pipe(this.alert_on_error('Failed to login'));
   }
+  loginAnonymous(): void {
+    this.setState();
+    const state = 'anonymous';
+    this.http
+      .get<LoginResponse>(environment.apiURL + '/login', {
+        params: { state: state },
+      })
+      .pipe(this.alert_on_error('Failed to login'))
+      .subscribe((response) => {
+        // @ts-ignore
+        localStorage.setItem('session_key', response.api_token);
+        this.setLoggedIn(true);
+      });
+  }
 
   logout(): Observable<{}> {
     return this.http

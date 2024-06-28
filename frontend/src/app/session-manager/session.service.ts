@@ -29,7 +29,7 @@ export class SessionService {
   }
 
   fetchSessionState() {
-    this.http.get<SessionResponse>(environment.apiURL + '/session').subscribe({
+    this.http.get<SessionResponse>(environment.apiURL + '/session/').subscribe({
       next: (response) => {
         this.sessionState = {
           isInSession: true,
@@ -51,13 +51,13 @@ export class SessionService {
 
   createSession(): void {
     this.http
-      .post<any>(environment.apiURL + '/session', {})
+      .post<any>(environment.apiURL + '/session/', {})
       .subscribe(() => this.fetchSessionState());
   }
 
   deleteSession(): void {
     this.http
-      .delete<any>(environment.apiURL + '/session')
+      .delete<any>(environment.apiURL + '/session/')
       .subscribe(() => this.fetchSessionState());
   }
 
