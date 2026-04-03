@@ -2,8 +2,8 @@
 FROM python:3.11
 
 # Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 ENV POETRY_VERSION=1.6.1
 
 # Set the working directory in the container
@@ -23,7 +23,7 @@ COPY ./poetry.toml .
 
 # Project initialization:
 RUN python -m poetry config virtualenvs.create false
-RUN python -m poetry install --without dev --no-interaction --no-ansi
+RUN python -m poetry install --without dev --no-interaction --no-ansi --no-root
 
 # Copy the rest of the application to the container
 COPY . /app/

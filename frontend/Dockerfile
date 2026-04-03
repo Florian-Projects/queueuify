@@ -19,7 +19,7 @@ FROM nginx:alpine
 
 # Copy the built Angular app from the previous stage to the NGINX container
 COPY --from=build /app/dist/frontend /srv/www/queueify
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 RUN chmod -R 777 /etc/nginx
 RUN chmod -R 777 /srv/www
 # Expose port 80
