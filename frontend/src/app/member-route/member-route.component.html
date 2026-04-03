@@ -1,0 +1,51 @@
+<section class="member-route">
+  <header class="member-route__header">
+    <div>
+      <p class="member-route__eyebrow">Members</p>
+      <h1>Room roster</h1>
+      <p class="member-route__subtitle">
+        Review who is currently in the session and prepare moderation actions.
+      </p>
+    </div>
+    <button
+      *ngIf="sessionState.isOwner"
+      class="member-route__button"
+      type="button"
+      (click)="refreshMembers()"
+    >
+      Refresh Members
+    </button>
+  </header>
+
+  <article class="member-route__panel" *ngIf="!sessionState.isOwner; else memberList">
+    <p class="member-route__label">Host Only</p>
+    <h2>Only the host can manage room members.</h2>
+  </article>
+</section>
+
+<ng-template #memberList>
+  <section class="member-route__panel">
+    <div class="member-route__panel-header">
+      <p class="member-route__label">Active members</p>
+      <span class="member-route__count">{{ members.length }} members</span>
+    </div>
+
+    <p class="member-route__error" *ngIf="error">{{ error }}</p>
+    <div class="member-route__empty" *ngIf="isLoading">Loading members...</div>
+    <div class="member-route__empty" *ngIf="!isLoading && !members.length && !error">
+      No members have joined this room yet.
+    </div>
+
+    <article class="member-route__row" *ngFor="let member of members">
+      <div class="member-route__meta">
+        <h3>{{ member.display_name }}</h3>
+        <p>{{ member.id }}</p>
+      </div>
+      <div class="member-route__actions">
+        <button class="member-route__action" type="button" disabled>Ban</button>
+        <button class="member-route__action" type="button" disabled>Timeout</button>
+        <button class="member-route__action" type="button" disabled>Kick</button>
+      </div>
+    </article>
+  </section>
+</ng-template>

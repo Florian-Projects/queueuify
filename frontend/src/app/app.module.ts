@@ -25,8 +25,11 @@ import { UserComponent } from './session-manager/member-management/user/user.com
 import { MemberManagemetComponent } from './session-manager/member-management/member-managemet.component';
 import { AuthInterceptor } from './auth.interceptor';
 import { LandingComponent } from './landing/landing.component';
+import { MemberRouteComponent } from './member-route/member-route.component';
 import { SessionShellComponent } from './session-shell/session-shell.component';
+import { QueueRouteComponent } from './queue-route/queue-route.component';
 import { SearchRouteComponent } from './search-route/search-route.component';
+import { SessionRouteComponent } from './session-route/session-route.component';
 
 @NgModule({
   declarations: [
@@ -34,6 +37,9 @@ import { SearchRouteComponent } from './search-route/search-route.component';
     LandingComponent,
     SessionShellComponent,
     SearchRouteComponent,
+    QueueRouteComponent,
+    SessionRouteComponent,
+    MemberRouteComponent,
     MenubarComponent,
     OauthCallbackComponent,
     SessionManagerComponent,

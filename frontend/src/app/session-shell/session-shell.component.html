@@ -10,9 +10,7 @@
         *ngFor="let navItem of visibleNavItems"
         class="session-shell__nav-item"
         type="button"
-        [class.session-shell__nav-item--active]="navItem.route === '/search'"
-        [class.session-shell__nav-item--disabled]="!navItem.enabled"
-        [attr.aria-disabled]="!navItem.enabled"
+        [class.session-shell__nav-item--active]="isActiveNavItem(navItem)"
         (click)="onSelectNavItem(navItem)"
       >
         <span class="material-symbols-outlined">{{ navItem.icon }}</span>
@@ -70,9 +68,7 @@
         *ngFor="let navItem of visibleNavItems"
         class="session-shell__bottom-nav-item"
         type="button"
-        [class.session-shell__bottom-nav-item--active]="navItem.route === '/search'"
-        [class.session-shell__bottom-nav-item--disabled]="!navItem.enabled"
-        [attr.aria-disabled]="!navItem.enabled"
+        [class.session-shell__bottom-nav-item--active]="isActiveNavItem(navItem)"
         (click)="onSelectNavItem(navItem)"
       >
         <span class="material-symbols-outlined">{{ navItem.icon }}</span>

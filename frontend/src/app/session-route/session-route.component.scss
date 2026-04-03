@@ -1,0 +1,135 @@
+:host {
+  display: block;
+}
+
+.session-route {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.session-route__header,
+.session-route__panel {
+  border: 1px solid var(--outline-soft);
+  border-radius: var(--radius-lg);
+  background: rgba(16, 19, 26, 0.9);
+  box-shadow: var(--shadow-ambient);
+}
+
+.session-route__header {
+  padding: 1.5rem;
+}
+
+.session-route__eyebrow,
+.session-route__label {
+  margin: 0 0 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.session-route__header h1,
+.session-route__panel h2,
+.session-route__setting h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  letter-spacing: -0.04em;
+}
+
+.session-route__subtitle,
+.session-route__copy,
+.session-route__setting p,
+.session-route__feedback {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.session-route__grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.session-route__panel {
+  padding: 1.5rem;
+}
+
+.session-route__code {
+  margin-bottom: 0.75rem;
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 8vw, 4rem);
+  font-weight: 800;
+  letter-spacing: 0.2em;
+}
+
+.session-route__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1.5rem 0 0.9rem;
+}
+
+.session-route__button {
+  min-height: 3rem;
+  padding: 0.85rem 1.1rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--surface-highest);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: transform 160ms ease;
+}
+
+.session-route__button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.session-route__button--ghost {
+  background: rgba(50, 53, 60, 0.72);
+}
+
+.session-route__button--danger {
+  background: rgba(239, 68, 68, 0.88);
+}
+
+.session-route__button--disabled,
+.session-route__button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.session-route__feedback {
+  color: var(--primary);
+}
+
+.session-route__settings {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.session-route__setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  background: rgba(25, 28, 34, 0.88);
+}
+
+.session-route__setting p {
+  margin-top: 0.35rem;
+}
+
+@media (min-width: 960px) {
+  .session-route__header,
+  .session-route__panel {
+    padding: 2rem;
+  }
+
+  .session-route__grid {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  }
+}

@@ -27,14 +27,14 @@ export class SessionShellComponent implements OnInit {
   protected currentTrack: SpotifyTrack | null = null;
 
   private readonly navItems: SessionNavItem[] = [
-    { label: 'Session', icon: 'dashboard', route: '/session', enabled: false },
+    { label: 'Session', icon: 'dashboard', route: '/session', enabled: true },
     { label: 'Search', icon: 'search', route: '/search', enabled: true },
-    { label: 'Queue', icon: 'queue_music', route: '/queue', enabled: false },
+    { label: 'Queue', icon: 'queue_music', route: '/queue', enabled: true },
     {
       label: 'Member',
       icon: 'group',
       route: '/member',
-      enabled: false,
+      enabled: true,
       hostOnly: true,
     },
   ];
@@ -86,6 +86,10 @@ export class SessionShellComponent implements OnInit {
     }
 
     this.router.navigateByUrl(navItem.route);
+  }
+
+  protected isActiveNavItem(navItem: SessionNavItem): boolean {
+    return this.router.url === navItem.route;
   }
 
   private loadCurrentTrack(): void {

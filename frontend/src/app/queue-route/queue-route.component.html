@@ -1,0 +1,71 @@
+<section class="queue-route">
+  <header class="queue-route__header">
+    <div>
+      <p class="queue-route__eyebrow">Queue</p>
+      <h1>Playback order</h1>
+      <p class="queue-route__subtitle">
+        Inspect the active queue and refresh it against the host Spotify player.
+      </p>
+    </div>
+    <button class="queue-route__button" type="button" (click)="refreshQueue()">
+      Refresh Queue
+    </button>
+  </header>
+
+  <p class="queue-route__error" *ngIf="error">{{ error }}</p>
+
+  <div class="queue-route__grid">
+    <article class="queue-route__panel">
+      <p class="queue-route__label">Now Playing</p>
+
+      <div class="queue-route__empty" *ngIf="!isLoading && !currentTrack">
+        No track is currently playing.
+      </div>
+
+      <div class="queue-route__current" *ngIf="currentTrack as track">
+        <img
+          class="queue-route__art"
+          [src]="track.album?.images?.[0]?.url"
+          [alt]="track.name || 'Now playing artwork'"
+        />
+        <div>
+          <h2>{{ track.name }}</h2>
+          <p>{{ trackArtistLine(track) }}</p>
+        </div>
+      </div>
+    </article>
+
+    <section class="queue-route__panel">
+      <div class="queue-route__panel-header">
+        <p class="queue-route__label">Upcoming</p>
+        <span class="queue-route__count">{{ queuedTracks.length }} tracks</span>
+      </div>
+
+      <div class="queue-route__empty" *ngIf="isLoading">Loading queue...</div>
+      <div class="queue-route__empty" *ngIf="!isLoading && !queuedTracks.length">
+        The queue is currently empty.
+      </div>
+
+      <article class="queue-route__row" *ngFor="let track of queuedTracks; let index = index">
+        <span class="queue-route__index">{{ index + 1 | number: '2.0-0' }}</span>
+        <img
+          class="queue-route__thumb"
+          [src]="track.album?.images?.[0]?.url"
+          [alt]="track.name || 'Queued track artwork'"
+        />
+        <div class="queue-route__meta">
+          <h3>{{ track.name }}</h3>
+          <p>{{ trackArtistLine(track) }}</p>
+        </div>
+        <div class="queue-route__actions" *ngIf="sessionState.isOwner">
+          <button class="queue-route__icon-button" type="button" disabled>
+            Play Now
+          </button>
+          <button class="queue-route__icon-button" type="button" disabled>
+            Remove
+          </button>
+        </div>
+      </article>
+    </section>
+  </div>
+</section>

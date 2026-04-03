@@ -1,0 +1,101 @@
+<section class="session-route">
+  <header class="session-route__header">
+    <div>
+      <p class="session-route__eyebrow">Session</p>
+      <h1>Room controls</h1>
+      <p class="session-route__subtitle">
+        Share your code and manage the current listening room.
+      </p>
+    </div>
+  </header>
+
+  <div class="session-route__grid">
+    <article class="session-route__panel">
+      <p class="session-route__label">Session Code</p>
+      <div class="session-route__code">{{ sessionCode }}</div>
+      <p class="session-route__copy">
+        Guests can join this room with the current session code.
+      </p>
+
+      <div class="session-route__actions">
+        <button
+          class="session-route__button session-route__button--ghost"
+          type="button"
+          (click)="onCopySessionCode()"
+        >
+          Copy Code
+        </button>
+        <button
+          class="session-route__button session-route__button--ghost"
+          type="button"
+          (click)="onShareSessionCode()"
+        >
+          Share
+        </button>
+        <button
+          class="session-route__button session-route__button--danger"
+          type="button"
+          (click)="onExitSession()"
+        >
+          {{ primaryActionLabel }}
+        </button>
+      </div>
+
+      <p class="session-route__feedback" *ngIf="feedbackMessage">
+        {{ feedbackMessage }}
+      </p>
+    </article>
+
+    <article class="session-route__panel" *ngIf="sessionState.isOwner; else memberInfo">
+      <p class="session-route__label">Host Settings</p>
+      <h2>Backend wiring still pending</h2>
+      <p class="session-route__copy">
+        The settings from the approved Session design are shown here for testing
+        visibility, but they still need dedicated backend endpoints.
+      </p>
+
+      <div class="session-route__settings">
+        <div class="session-route__setting">
+          <div>
+            <h3>Disallow anonymous users</h3>
+            <p>Restrict room entry to Spotify-authenticated members only.</p>
+          </div>
+          <button class="session-route__button session-route__button--disabled" type="button" disabled>
+            Unavailable
+          </button>
+        </div>
+
+        <div class="session-route__setting">
+          <div>
+            <h3>Session type</h3>
+            <p>Switch between Host only and Everyone queueing.</p>
+          </div>
+          <button class="session-route__button session-route__button--disabled" type="button" disabled>
+            Unavailable
+          </button>
+        </div>
+
+        <div class="session-route__setting">
+          <div>
+            <h3>Explicit filter</h3>
+            <p>Prevent explicit tracks from entering the room queue.</p>
+          </div>
+          <button class="session-route__button session-route__button--disabled" type="button" disabled>
+            Unavailable
+          </button>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<ng-template #memberInfo>
+  <article class="session-route__panel">
+    <p class="session-route__label">Status</p>
+    <h2>Joined as a listener</h2>
+    <p class="session-route__copy">
+      Only the host can change room settings. You can still copy or share the
+      code from this view.
+    </p>
+  </article>
+</ng-template>

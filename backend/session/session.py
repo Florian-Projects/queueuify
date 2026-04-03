@@ -8,7 +8,7 @@ from starlette.authentication import requires
 from tortoise.exceptions import DoesNotExist
 
 from session.models import GroupSession, PGroupSession
-from session.utils import can_create_session
+from session.utils import can_create_session, get_active_session
 from spotify_connector.spotify import SpotifyConnector
 
 router = APIRouter()
@@ -17,15 +17,9 @@ router = APIRouter()
 @router.get("")
 @requires(["authenticated"])
 async def get_session(request: Request):
-    if owned_session := await request.user.owned_session:
-        session_dict = await PGroupSession.from_tortoise_orm(owned_session)
-        session_dict = session_dict.model_dump()
-        return {"is_owner": True, **session_dict}
-
-    if joined_session := await GroupSession.filter(members=request.user).first():
-        session_dict = await PGroupSession.from_tortoise_orm(joined_session)
-        session_dict = session_dict.dict()
-        return {"is_owner": False, **session_dict}
+    if session := await get_active_session(request.user):
+        session_dict = await PGroupSession.from_tortoise_orm(session)
+        return {"is_owner": session.owner_id == request.user.id, **session_dict.model_dump()}
 
     return JSONResponse(
         status_code=HTTPStatus.NOT_FOUND, content={"details": "User not in session"}
@@ -105,10 +99,7 @@ async def join_session(request: Request, token: str):
             content={"detail": "Session not found"},
         )
 
-    if (
-        request.user in await session.members
-        or request.user == await session.owner.first()
-    ):
+    if request.user.id == session.owner_id or request.user in await session.members:
         return JSONResponse(
             status_code=HTTPStatus.CONFLICT,
             content={"detail": "User is already a member of the session"},
@@ -128,7 +119,7 @@ async def leave_session(request: Request, token: str):
             content={"detail": "Session not found"},
         )
 
-    if request.user == await session.owner.first():
+    if request.user.id == session.owner_id:
         return JSONResponse(
             status_code=HTTPStatus.CONFLICT,
             content={"detail": "Can't leave owned group"},
@@ -154,13 +145,13 @@ async def add_song_to_session_queue(request: Request, token: str, song_id: str):
             status_code=HTTPStatus.NOT_FOUND.value,
             content={"detail": "Session not found"},
         )
-    session_owner = await session.owner.first()
-    if request.user not in await session.members and request.user != session_owner:
+    if request.user.id != session.owner_id and request.user not in await session.members:
         return JSONResponse(
             status_code=HTTPStatus.FORBIDDEN,
             content={"detail": "User is not a member of the session"},
         )
 
+    session_owner = await session.owner
     connector = await SpotifyConnector.create(user=session_owner)
     success = await connector.add_song_to_queue(song_id)
     return {"Success": success}
@@ -177,13 +168,13 @@ async def get_queue_content(request: Request, token: str):
             content={"detail": "Session not found"},
         )
 
-    session_owner = await session.owner.first()
-    if request.user not in await session.members and request.user != session_owner:
+    if request.user.id != session.owner_id and request.user not in await session.members:
         return JSONResponse(
             status_code=HTTPStatus.FORBIDDEN,
             content={"detail": "User is not a member of the session"},
         )
 
+    session_owner = await session.owner
     spotify_connector = await SpotifyConnector.create(user=session_owner)
     return await spotify_connector.get_current_queue()
 

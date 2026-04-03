@@ -49,7 +49,13 @@
   <ng-container *ngIf="!isLoadingResults">
     <div class="search-route__empty" *ngIf="!results.length && !searchError">
       <p class="search-route__label">No Results</p>
-      <h3>Try a different artist, song title, or album.</h3>
+      <h3>
+        {{
+          query.trim()
+            ? 'Try a different artist, song title, or album.'
+            : 'Start typing to search Spotify.'
+        }}
+      </h3>
     </div>
 
     <div class="search-route__results" *ngIf="results.length">

@@ -4,6 +4,7 @@ import {
   catchError,
   debounceTime,
   distinctUntilChanged,
+  map,
   of,
   switchMap,
 } from 'rxjs';
@@ -51,11 +52,22 @@ export class SearchRouteComponent implements OnInit {
         debounceTime(250),
         distinctUntilChanged(),
         switchMap((query) => {
-          this.isLoadingResults = true;
+          const normalizedQuery = query.trim();
           this.searchError = '';
           this.addedTrackUris.clear();
 
+          if (!normalizedQuery) {
+            this.isLoadingResults = false;
+            return of({
+              tracks: {
+                items: [],
+              },
+            });
+          }
+
+          this.isLoadingResults = true;
           return this.searchService.list(query).pipe(
+            map((response) => response ?? { tracks: { items: [] } }),
             catchError((error) => {
               this.searchError =
                 error?.error?.detail ??
@@ -87,6 +99,10 @@ export class SearchRouteComponent implements OnInit {
   }
 
   protected get totalMatchesLabel(): string {
+    if (!this.query.trim()) {
+      return 'Search Spotify';
+    }
+
     if (!this.results.length) {
       return '0 Matches';
     }

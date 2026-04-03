@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from starlette.authentication import requires
 
-from session.models import GroupSession
+from session.utils import get_active_session
 from spotify_connector.spotify import SpotifyConnector
 
 router = APIRouter()
@@ -11,13 +11,19 @@ router = APIRouter()
 @requires(["authenticated"])
 async def search_song_on_spotify(request: Request, song_name: str):
     user = await request.user
-    session = await user.groupsessions.all().first()
-    session_owner = await session.owner.first()
-    access_toke = None
+    if not song_name.strip():
+        return {"tracks": {"items": []}}
+
     if user.access_token:
-        access_toke = access_toke
-    elif session_owner.access_token:
-        access_toke = session_owner.access_token
-    spotify_connector = await SpotifyConnector.create(access_token=access_toke)
+        spotify_connector = await SpotifyConnector.create(user=user)
+    else:
+        session = await get_active_session(user)
+        session_owner = await session.owner if session else None
+
+        if session_owner and session_owner.access_token:
+            spotify_connector = await SpotifyConnector.create(user=session_owner)
+        else:
+            spotify_connector = await SpotifyConnector.create()
+
     response = await spotify_connector.search_song(song_name)
     return response
