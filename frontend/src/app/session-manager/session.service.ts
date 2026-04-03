@@ -52,7 +52,7 @@ export class SessionService {
       return of(this.applySessionState(this.createEmptySessionState()));
     }
 
-    return this.http.get<SessionResponse>(environment.apiURL + '/session/').pipe(
+    return this.http.get<SessionResponse>(environment.apiURL + '/session').pipe(
       map((response) =>
         this.applySessionState({
           isInSession: true,
@@ -74,13 +74,13 @@ export class SessionService {
 
   createSessionRequest(): Observable<unknown> {
     return this.http
-      .post<unknown>(environment.apiURL + '/session/', {})
+      .post<unknown>(environment.apiURL + '/session', {})
       .pipe(tap(() => this.fetchSessionState()));
   }
 
   deleteSession(): void {
     this.http
-      .delete<any>(environment.apiURL + '/session/')
+      .delete<any>(environment.apiURL + '/session')
       .subscribe(() => this.fetchSessionState());
   }
 
