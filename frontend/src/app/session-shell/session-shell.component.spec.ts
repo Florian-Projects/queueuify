@@ -1,51 +1,49 @@
 import { EventEmitter, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatDialog } from '@angular/material/dialog';
-import { of } from 'rxjs';
+import { Router } from '@angular/router';
 import { SessionService } from '../session-manager/session.service';
-
-import { MenubarComponent } from './menubar.component';
+import { SessionShellComponent } from './session-shell.component';
 
 class SessionServiceStub {
   sessionChanged = new EventEmitter();
 
   getSessionState() {
     return {
-      isInSession: false,
-      sessionToken: null,
-      isOwner: false,
+      isInSession: true,
+      sessionToken: 'ABC123',
+      isOwner: true,
     };
   }
 
-  createSession() {}
-  deleteSession() {}
-  joinSession() {}
-  leaveSession() {}
+  getQueue() {
+    return {
+      subscribe: ({ next }: { next: (response: any) => void }) =>
+        next({ currently_playing: null, queue: [] }),
+    };
+  }
 }
 
-describe('MenubarComponent', () => {
-  let component: MenubarComponent;
-  let fixture: ComponentFixture<MenubarComponent>;
+describe('SessionShellComponent', () => {
+  let component: SessionShellComponent;
+  let fixture: ComponentFixture<SessionShellComponent>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [MenubarComponent],
+      declarations: [SessionShellComponent],
       providers: [
         { provide: SessionService, useClass: SessionServiceStub },
         {
-          provide: MatDialog,
+          provide: Router,
           useValue: {
-            open: () => ({
-              afterClosed: () => of('ABC123'),
-            }),
+            navigateByUrl: () => Promise.resolve(true),
           },
         },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     });
-    fixture = TestBed.createComponent(MenubarComponent);
+
+    fixture = TestBed.createComponent(SessionShellComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
   });
 
   it('should create', () => {

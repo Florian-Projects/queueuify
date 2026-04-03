@@ -1,3 +1,4 @@
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { UserComponent } from './user.component';
@@ -9,6 +10,7 @@ describe('SessionManagementComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       declarations: [UserComponent],
+      schemas: [NO_ERRORS_SCHEMA],
     });
     fixture = TestBed.createComponent(UserComponent);
     component = fixture.componentInstance;

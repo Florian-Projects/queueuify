@@ -24,10 +24,16 @@ import { MatCardModule } from '@angular/material/card';
 import { UserComponent } from './session-manager/member-management/user/user.component';
 import { MemberManagemetComponent } from './session-manager/member-management/member-managemet.component';
 import { AuthInterceptor } from './auth.interceptor';
+import { LandingComponent } from './landing/landing.component';
+import { SessionShellComponent } from './session-shell/session-shell.component';
+import { SearchRouteComponent } from './search-route/search-route.component';
 
 @NgModule({
   declarations: [
     AppComponent,
+    LandingComponent,
+    SessionShellComponent,
+    SearchRouteComponent,
     MenubarComponent,
     OauthCallbackComponent,
     SessionManagerComponent,

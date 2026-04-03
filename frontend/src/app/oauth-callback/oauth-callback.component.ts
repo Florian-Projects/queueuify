@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { LoginService } from '../login.service';
 import { environment } from '../../environments/environments';
+import { SessionService } from '../session-manager/session.service';
 
 @Component({
   selector: 'app-oauth-callback',
@@ -15,6 +16,7 @@ export class OauthCallbackComponent implements OnInit {
     private http: HttpClient,
     private router: Router,
     private loginService: LoginService,
+    private sessionService: SessionService,
   ) {}
 
   ngOnInit(): void {
@@ -25,13 +27,15 @@ export class OauthCallbackComponent implements OnInit {
         this.http
           .post(environment.apiURL + '/exchange_oauth_code', { code, state })
           .subscribe((response: any) => {
-            localStorage.setItem('session_key', response.api_token);
-            this.loginService.setLoggedIn(true);
+            this.loginService.storeSessionToken(response.api_token, 'spotify');
+            this.sessionService.fetchSessionStateRequest().subscribe((sessionState) => {
+              this.router.navigateByUrl(sessionState.isInSession ? '/search' : '/');
+            });
           });
       } else {
         alert('Login Failed');
+        this.router.navigateByUrl('/');
       }
-      this.router.navigateByUrl('/');
     });
   }
 }

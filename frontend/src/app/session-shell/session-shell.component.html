@@ -1,0 +1,92 @@
+<div class="session-shell" *ngIf="!isLoadingSession; else sessionLoading">
+  <aside class="session-shell__sidebar">
+    <div class="session-shell__brand">
+      <p class="session-shell__brand-name">Queueify</p>
+      <p class="session-shell__brand-tag">Sonic Obsidian</p>
+    </div>
+
+    <nav class="session-shell__nav" aria-label="Session navigation">
+      <button
+        *ngFor="let navItem of visibleNavItems"
+        class="session-shell__nav-item"
+        type="button"
+        [class.session-shell__nav-item--active]="navItem.route === '/search'"
+        [class.session-shell__nav-item--disabled]="!navItem.enabled"
+        [attr.aria-disabled]="!navItem.enabled"
+        (click)="onSelectNavItem(navItem)"
+      >
+        <span class="material-symbols-outlined">{{ navItem.icon }}</span>
+        <span>{{ navItem.label }}</span>
+      </button>
+    </nav>
+  </aside>
+
+  <div class="session-shell__canvas">
+    <header class="session-shell__topbar">
+      <div class="session-shell__topbar-left">
+        <p class="session-shell__topbar-brand">Queueify</p>
+        <span class="session-shell__chip">Live Session</span>
+      </div>
+
+      <div class="session-shell__topbar-right" aria-hidden="true">
+        <span class="material-symbols-outlined">notifications</span>
+        <span class="material-symbols-outlined">settings</span>
+        <span class="session-shell__avatar">
+          <span class="material-symbols-outlined">account_circle</span>
+        </span>
+      </div>
+    </header>
+
+    <div class="session-shell__content">
+      <router-outlet></router-outlet>
+    </div>
+
+    <div class="session-shell__now-playing" *ngIf="currentTrack">
+      <img
+        class="session-shell__now-playing-art"
+        [src]="currentTrack.album?.images?.[0]?.url"
+        [alt]="currentTrack.name || 'Currently playing artwork'"
+      />
+      <div class="session-shell__now-playing-copy">
+        <p class="session-shell__now-playing-title">{{ currentTrack.name }}</p>
+        <p class="session-shell__now-playing-subtitle">
+          {{ currentTrackArtistLine }}
+        </p>
+      </div>
+      <div class="session-shell__now-playing-controls" aria-hidden="true">
+        <span class="material-symbols-outlined">skip_previous</span>
+        <span class="session-shell__now-playing-play">
+          <span class="material-symbols-outlined">pause</span>
+        </span>
+        <span class="material-symbols-outlined">skip_next</span>
+      </div>
+      <div class="session-shell__now-playing-progress">
+        <span></span>
+      </div>
+    </div>
+
+    <nav class="session-shell__bottom-nav" aria-label="Session navigation">
+      <button
+        *ngFor="let navItem of visibleNavItems"
+        class="session-shell__bottom-nav-item"
+        type="button"
+        [class.session-shell__bottom-nav-item--active]="navItem.route === '/search'"
+        [class.session-shell__bottom-nav-item--disabled]="!navItem.enabled"
+        [attr.aria-disabled]="!navItem.enabled"
+        (click)="onSelectNavItem(navItem)"
+      >
+        <span class="material-symbols-outlined">{{ navItem.icon }}</span>
+        <span>{{ navItem.label }}</span>
+      </button>
+    </nav>
+  </div>
+</div>
+
+<ng-template #sessionLoading>
+  <div class="session-shell__loading">
+    <div class="session-shell__loading-card">
+      <p class="session-shell__loading-label">Loading Session</p>
+      <h1>Preparing your listening room.</h1>
+    </div>
+  </div>
+</ng-template>

@@ -1,0 +1,203 @@
+<div class="landing-shell">
+  <aside class="landing-sidebar" aria-label="In-session navigation preview">
+    <div class="landing-brand">
+      <div class="landing-brand__mark">
+        <span class="material-symbols-outlined">queue_music</span>
+      </div>
+      <div>
+        <p class="landing-brand__name">Queueify</p>
+        <p class="landing-brand__tag">Sonic Obsidian</p>
+      </div>
+    </div>
+
+    <nav class="landing-nav">
+      <div class="landing-nav__item">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span>Session</span>
+      </div>
+      <div class="landing-nav__item">
+        <span class="material-symbols-outlined">search</span>
+        <span>Search</span>
+      </div>
+      <div class="landing-nav__item">
+        <span class="material-symbols-outlined">queue_music</span>
+        <span>Queue</span>
+      </div>
+      <div class="landing-nav__item">
+        <span class="material-symbols-outlined">group</span>
+        <span>Member</span>
+      </div>
+    </nav>
+
+    <button
+      class="landing-sidebar__cta"
+      type="button"
+      [class.landing-sidebar__cta--muted]="loggedIn && !canHost"
+      [disabled]="sidebarActionDisabled"
+      (click)="onSidebarAction()"
+    >
+      Start Session
+    </button>
+  </aside>
+
+  <main class="landing-main">
+    <header class="landing-topbar">
+      <div class="landing-topbar__brand">Queueify</div>
+      <div class="landing-topbar__icons" aria-hidden="true">
+        <span class="material-symbols-outlined">notifications</span>
+        <span class="material-symbols-outlined">settings</span>
+        <span class="material-symbols-outlined">account_circle</span>
+      </div>
+    </header>
+
+    <section class="landing-stage">
+      <div class="landing-glow landing-glow--indigo"></div>
+      <div class="landing-glow landing-glow--emerald"></div>
+
+      <section class="landing-mobile-poster" aria-hidden="true">
+        <div class="landing-mobile-poster__glow"></div>
+        <div class="landing-mobile-poster__figure"></div>
+        <div class="landing-mobile-poster__copy">
+          <p class="landing-mobile-poster__title">
+            Sonic
+            <span>Obsidian</span>
+          </p>
+          <p class="landing-mobile-poster__subtitle">
+            The Editorial Music Experience
+          </p>
+        </div>
+      </section>
+
+      <section class="landing-card">
+        <div class="landing-card__icon" aria-hidden="true">
+          <span class="material-symbols-outlined">album</span>
+        </div>
+
+        <div class="landing-card__content">
+          <p class="landing-card__eyebrow">{{ eyebrow }}</p>
+
+          <h1 class="landing-card__title">
+            {{ headlineLead }}
+            <span>{{ headlineAccent }}</span>
+          </h1>
+
+          <p class="landing-card__description">{{ heroDescription }}</p>
+
+          <div class="landing-card__actions" *ngIf="isLoggedOut; else entryFlow">
+            <button
+              class="landing-button landing-button--spotify"
+              type="button"
+              [disabled]="pendingAction !== null"
+              (click)="onPrimaryAction()"
+            >
+              <span class="material-symbols-outlined">play_circle</span>
+              <span>{{ spotifyButtonLabel }}</span>
+            </button>
+
+            <button
+              class="landing-button landing-button--ghost"
+              type="button"
+              [disabled]="pendingAction !== null"
+              (click)="onSecondaryAction()"
+            >
+              <span class="material-symbols-outlined">person_off</span>
+              <span>{{ anonymousButtonLabel }}</span>
+            </button>
+          </div>
+
+          <ng-template #entryFlow>
+            <form class="landing-form" (ngSubmit)="onJoinSession()">
+              <label class="landing-form__label" for="session-code">
+                Session code
+              </label>
+
+              <div class="landing-form__row">
+                <input
+                  id="session-code"
+                  class="landing-form__input"
+                  name="sessionCode"
+                  [ngModel]="sessionCode"
+                  maxlength="6"
+                  autocapitalize="characters"
+                  autocomplete="one-time-code"
+                  placeholder="AB12CD"
+                  (ngModelChange)="onSessionCodeChange($event)"
+                />
+
+                <button
+                  class="landing-button landing-button--primary"
+                  type="submit"
+                  [disabled]="pendingAction !== null"
+                >
+                  {{ joinButtonLabel }}
+                </button>
+              </div>
+            </form>
+
+            <div class="landing-card__actions landing-card__actions--stacked">
+              <button
+                *ngIf="showHostAction"
+                class="landing-button landing-button--ghost"
+                type="button"
+                [disabled]="pendingAction !== null"
+                (click)="onCreateSession()"
+              >
+                <span class="material-symbols-outlined">radio_button_checked</span>
+                <span>{{ hostButtonLabel }}</span>
+              </button>
+
+              <button
+                class="landing-text-button"
+                type="button"
+                [disabled]="pendingAction !== null"
+                (click)="onSecondaryAction()"
+              >
+                {{ logoutButtonLabel }}
+              </button>
+            </div>
+          </ng-template>
+
+          <p class="landing-card__message landing-card__message--error" *ngIf="errorMessage">
+            {{ errorMessage }}
+          </p>
+
+          <p class="landing-card__footnote">{{ footerNote }}</p>
+        </div>
+      </section>
+
+      <div class="landing-waveform" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      <p class="landing-support">{{ supportText }}</p>
+    </section>
+
+    <nav class="landing-bottom-nav" aria-label="In-session navigation preview">
+      <div class="landing-bottom-nav__item">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span>Session</span>
+      </div>
+      <div class="landing-bottom-nav__item">
+        <span class="material-symbols-outlined">search</span>
+        <span>Search</span>
+      </div>
+      <div class="landing-bottom-nav__item">
+        <span class="material-symbols-outlined">queue_music</span>
+        <span>Queue</span>
+      </div>
+      <div class="landing-bottom-nav__item">
+        <span class="material-symbols-outlined">person</span>
+        <span>Member</span>
+      </div>
+    </nav>
+  </main>
+</div>

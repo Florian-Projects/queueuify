@@ -1,0 +1,157 @@
+<section class="search-route">
+  <div class="search-route__hero">
+    <div class="search-route__header search-route__header--desktop">
+      <h1>
+        Find your
+        <span>rhythm.</span>
+      </h1>
+    </div>
+
+    <div class="search-route__header search-route__header--mobile">
+      <h1>Explore</h1>
+      <p>Find your next sonic obsession.</p>
+    </div>
+
+    <div class="search-route__searchbox">
+      <span class="material-symbols-outlined">search</span>
+      <input
+        name="songQuery"
+        [ngModel]="query"
+        placeholder="Search songs, artists, or albums..."
+        (ngModelChange)="onQueryChange($event)"
+      />
+      <span class="search-route__shortcut">CMD + K</span>
+    </div>
+  </div>
+
+  <div class="search-route__meta">
+    <div>
+      <span class="search-route__label">Search Results</span>
+      <h2>Trending Now</h2>
+    </div>
+    <span class="search-route__matches">{{ totalMatchesLabel }}</span>
+  </div>
+
+  <p class="search-route__message search-route__message--error" *ngIf="searchError">
+    {{ searchError }}
+  </p>
+  <p class="search-route__message search-route__message--error" *ngIf="queueError">
+    {{ queueError }}
+  </p>
+
+  <div class="search-route__loading" *ngIf="isLoadingResults">
+    <div class="search-route__loading-card">
+      <p class="search-route__label">Loading</p>
+      <h3>Searching Spotify...</h3>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!isLoadingResults">
+    <div class="search-route__empty" *ngIf="!results.length && !searchError">
+      <p class="search-route__label">No Results</p>
+      <h3>Try a different artist, song title, or album.</h3>
+    </div>
+
+    <div class="search-route__results" *ngIf="results.length">
+      <section class="search-route__featured-grid">
+        <article class="search-route__featured-card" *ngIf="featuredTrack as track">
+          <img
+            class="search-route__featured-art"
+            [src]="track.album?.images?.[0]?.url"
+            [alt]="track.name || 'Featured track artwork'"
+          />
+          <div class="search-route__featured-copy">
+            <h3>{{ track.name }}</h3>
+            <p>{{ trackArtistLine(track) }}</p>
+            <div class="search-route__featured-actions">
+              <button
+                *ngIf="sessionState.isOwner"
+                class="search-route__button search-route__button--primary search-route__button--disabled"
+                type="button"
+                disabled
+              >
+                <span class="material-symbols-outlined">play_arrow</span>
+                <span>Play Now</span>
+              </button>
+              <button
+                class="search-route__button search-route__button--ghost"
+                type="button"
+                [disabled]="!track.uri || queueLabel(track) !== 'Add to Queue'"
+                (click)="onAddToQueue(track)"
+              >
+                <span class="material-symbols-outlined">playlist_add</span>
+                <span>{{ queueLabel(track) }}</span>
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <div class="search-route__spotlight-list">
+          <article
+            class="search-route__spotlight-card"
+            *ngFor="let track of spotlightTracks"
+          >
+            <img
+              class="search-route__spotlight-art"
+              [src]="track.album?.images?.[0]?.url"
+              [alt]="track.name || 'Track artwork'"
+            />
+            <div class="search-route__spotlight-copy">
+              <h4>{{ track.name }}</h4>
+              <p>{{ trackArtistLine(track) }}</p>
+            </div>
+            <button
+              class="search-route__icon-button"
+              type="button"
+              [disabled]="!track.uri || queueLabel(track) !== 'Add to Queue'"
+              (click)="onAddToQueue(track)"
+            >
+              <span class="material-symbols-outlined">add</span>
+            </button>
+          </article>
+        </div>
+      </section>
+
+      <section class="search-route__list-section" *ngIf="remainingTracks.length">
+        <div class="search-route__list-header">
+          <h3>More Results</h3>
+          <span></span>
+        </div>
+
+        <article
+          class="search-route__list-row"
+          *ngFor="let track of remainingTracks; let index = index"
+        >
+          <span class="search-route__list-index">{{ index + 1 | number: '2.0-0' }}</span>
+          <img
+            class="search-route__list-art"
+            [src]="track.album?.images?.[0]?.url"
+            [alt]="track.name || 'Track artwork'"
+          />
+          <div class="search-route__list-main">
+            <h4>{{ track.name }}</h4>
+            <p>{{ trackArtistLine(track) }}</p>
+          </div>
+          <div class="search-route__list-actions">
+            <button
+              *ngIf="sessionState.isOwner"
+              class="search-route__icon-button search-route__icon-button--disabled"
+              type="button"
+              disabled
+            >
+              <span class="material-symbols-outlined">play_circle</span>
+            </button>
+            <button
+              class="search-route__icon-button"
+              type="button"
+              [disabled]="!track.uri || queueLabel(track) !== 'Add to Queue'"
+              (click)="onAddToQueue(track)"
+            >
+              <span class="material-symbols-outlined">playlist_add</span>
+            </button>
+          </div>
+        </article>
+      </section>
+    </div>
+  </ng-container>
+</section>
