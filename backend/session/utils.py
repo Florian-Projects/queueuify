@@ -14,3 +14,7 @@ async def can_create_session(user: User):
         return False
 
     return True
+
+
+def can_host_sessions(user: User):
+    return user.can_host_sessions

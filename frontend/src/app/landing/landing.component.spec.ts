@@ -21,12 +21,21 @@ class LoginServiceStub {
     return false;
   }
 
+  bootstrapCurrentUser() {
+    return of(null);
+  }
+
   login() {
     return of({ authorization_url: 'https://example.com' });
   }
 
   loginAnonymous() {
-    return of({ api_token: 'token' });
+    return of({
+      api_token: 'token',
+      auth_mode: 'anonymous',
+      can_host_sessions: false,
+      display_name: 'Guest TEST',
+    });
   }
 
   logout() {

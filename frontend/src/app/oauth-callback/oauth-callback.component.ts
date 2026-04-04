@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { LoginService } from '../login.service';
-import { environment } from '../../environments/environments';
 import { SessionService } from '../session-manager/session.service';
 
 @Component({
@@ -13,7 +11,6 @@ import { SessionService } from '../session-manager/session.service';
 export class OauthCallbackComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
-    private http: HttpClient,
     private router: Router,
     private loginService: LoginService,
     private sessionService: SessionService,
@@ -23,19 +20,22 @@ export class OauthCallbackComponent implements OnInit {
     this.route.queryParams.subscribe((params) => {
       const code = params['code'];
       const state = params['state'];
-      if (state === this.loginService.getState()) {
-        this.http
-          .post(environment.apiURL + '/exchange_oauth_code', { code, state })
-          .subscribe((response: any) => {
-            this.loginService.storeSessionToken(response.api_token, 'spotify');
-            this.sessionService.fetchSessionStateRequest().subscribe((sessionState) => {
-              this.router.navigateByUrl(sessionState.isInSession ? '/search' : '/');
-            });
-          });
-      } else {
+      if (!code || state !== this.loginService.getState()) {
         alert('Login Failed');
         this.router.navigateByUrl('/');
+        return;
       }
+
+      this.loginService.completeSpotifyLogin(code, state).subscribe({
+        next: () => {
+          this.sessionService.fetchSessionStateRequest().subscribe((sessionState) => {
+            this.router.navigateByUrl(sessionState.isInSession ? '/search' : '/');
+          });
+        },
+        error: () => {
+          this.router.navigateByUrl('/');
+        },
+      });
     });
   }
 }

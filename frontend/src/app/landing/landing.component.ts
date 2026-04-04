@@ -35,6 +35,12 @@ export class LandingComponent implements OnInit {
   ngOnInit(): void {
     this.loggedIn = this.loginService.loggedIn;
     this.authMode = this.loginService.getAuthMode();
+    if (this.loggedIn) {
+      this.loginService.bootstrapCurrentUser().subscribe({
+        error: () => undefined,
+      });
+    }
+
     this.sessionState = this.sessionService.getSessionState();
     if (this.sessionState.isInSession) {
       this.router.navigateByUrl('/search');

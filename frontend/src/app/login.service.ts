@@ -1,14 +1,23 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { catchError, Observable, pipe, tap, throwError } from 'rxjs';
+import { catchError, Observable, of, pipe, tap, throwError } from 'rxjs';
 import { environment } from '../environments/environments';
 
 export interface LoginResponse {
   authorization_url: string;
 }
 
-export interface AnonymousLoginResponse {
+export interface SessionTokenResponse {
   api_token: string;
+  auth_mode: 'spotify' | 'anonymous';
+  can_host_sessions: boolean;
+  display_name: string;
+}
+
+export interface CurrentUserResponse {
+  auth_mode: 'spotify' | 'anonymous';
+  can_host_sessions: boolean;
+  display_name: string;
 }
 
 export type AuthMode = 'spotify' | 'anonymous' | 'unknown' | null;
@@ -17,7 +26,6 @@ export type AuthMode = 'spotify' | 'anonymous' | 'unknown' | null;
   providedIn: 'root',
 })
 export class LoginService {
-  private static readonly authModeKey = 'queueify_auth_mode';
   private static readonly sessionKey = 'session_key';
 
   private static getRandomState() {
@@ -38,16 +46,7 @@ export class LoginService {
 
   constructor(private readonly http: HttpClient) {
     this.loggedIn = !!localStorage.getItem(LoginService.sessionKey);
-    this.authMode = this.readStoredAuthMode();
-  }
-
-  private readStoredAuthMode(): AuthMode {
-    const storedAuthMode = localStorage.getItem(LoginService.authModeKey);
-    if (storedAuthMode === 'spotify' || storedAuthMode === 'anonymous') {
-      return storedAuthMode;
-    }
-
-    return this.loggedIn ? 'unknown' : null;
+    this.authMode = this.loggedIn ? 'unknown' : null;
   }
 
   private setState() {
@@ -69,18 +68,13 @@ export class LoginService {
 
   private setAuthMode(value: AuthMode) {
     this.authMode = value;
-    if (value === 'spotify' || value === 'anonymous') {
-      localStorage.setItem(LoginService.authModeKey, value);
-    } else {
-      localStorage.removeItem(LoginService.authModeKey);
-    }
     this.authModeChanged.emit(this.authMode);
   }
 
   setLoggedIn(value: boolean, authMode?: AuthMode) {
     this.loggedIn = value;
     if (value) {
-      this.setAuthMode(authMode ?? this.readStoredAuthMode() ?? 'unknown');
+      this.setAuthMode(authMode ?? 'unknown');
     } else {
       this.setAuthMode(null);
     }
@@ -94,7 +88,6 @@ export class LoginService {
 
   clearClientSession() {
     localStorage.removeItem(LoginService.sessionKey);
-    localStorage.removeItem(LoginService.authModeKey);
     this.setLoggedIn(false, null);
   }
 
@@ -108,18 +101,52 @@ export class LoginService {
       .pipe(this.alert_on_error('Failed to login'));
   }
 
-  loginAnonymous(): Observable<AnonymousLoginResponse> {
-    this.setState();
+  loginAnonymous(): Observable<SessionTokenResponse> {
     return this.http
-      .get<AnonymousLoginResponse>(environment.apiURL + '/login', {
-        params: { state: 'anonymous' },
+      .post<SessionTokenResponse>(environment.apiURL + '/login/anonymous', {})
+      .pipe(
+        tap((response) =>
+          this.storeSessionToken(response.api_token, response.auth_mode),
+        ),
+        this.alert_on_error('Failed to start anonymous session'),
+      );
+  }
+
+  completeSpotifyLogin(
+    code: string,
+    state: string,
+  ): Observable<SessionTokenResponse> {
+    return this.http
+      .post<SessionTokenResponse>(environment.apiURL + '/exchange_oauth_code', {
+        code,
+        state,
       })
       .pipe(
         tap((response) =>
-          this.storeSessionToken(response.api_token, 'anonymous'),
+          this.storeSessionToken(response.api_token, response.auth_mode),
         ),
-        this.alert_on_error('Failed to login'),
+        this.alert_on_error('Failed to complete Spotify login'),
       );
+  }
+
+  bootstrapCurrentUser(): Observable<CurrentUserResponse | null> {
+    if (!localStorage.getItem(LoginService.sessionKey)) {
+      this.clearClientSession();
+      return of(null);
+    }
+
+    return this.http.get<CurrentUserResponse>(environment.apiURL + '/me').pipe(
+      tap((response) => this.setLoggedIn(true, response.auth_mode)),
+      catchError((error) => {
+        if (error?.status === 401 || error?.status === 403) {
+          this.clearClientSession();
+        } else {
+          this.setLoggedIn(true, 'unknown');
+        }
+
+        return throwError(() => error);
+      }),
+    );
   }
 
   logout(): Observable<{}> {
@@ -131,7 +158,12 @@ export class LoginService {
   private alert_on_error(message: string): any {
     return pipe(
       catchError((error: any) => {
-        alert(`${message}: ${JSON.stringify(error)}`);
+        const detail =
+          error?.error?.detail ??
+          error?.error?.details ??
+          error?.message ??
+          'Unknown error';
+        alert(`${message}: ${detail}`);
         return throwError(() => error);
       }),
     );

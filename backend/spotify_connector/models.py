@@ -1,11 +1,11 @@
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class UserDetailResponse(BaseModel):
     id: str
-    display_name: str
+    display_name: Optional[str] = None
 
 
 class SongSearchResponse(BaseModel):
@@ -19,7 +19,7 @@ class SpotifyExternalIds(BaseModel):
 class SpotifyAlbum(BaseModel):
     href: Optional[str] = None
     id: Optional[str] = None
-    images: Optional[List[dict]] = []
+    images: List[dict] = Field(default_factory=list)
     name: Optional[str] = None
     uri: Optional[str] = None
 
@@ -31,8 +31,9 @@ class SpotifyArtist(BaseModel):
 
 class SpotifyTrack(BaseModel):
     album: Optional[SpotifyAlbum] = None
-    artists: List[SpotifyArtist] = []
-    external_urls: Optional[dict] = {}
+    artists: List[SpotifyArtist] = Field(default_factory=list)
+    duration_ms: Optional[int] = None
+    external_urls: dict = Field(default_factory=dict)
     href: Optional[str] = None
     id: Optional[str] = None
     name: Optional[str] = None
@@ -40,7 +41,7 @@ class SpotifyTrack(BaseModel):
 
 
 class SpotifyTrackList(BaseModel):
-    items: List[SpotifyTrack]
+    items: List[SpotifyTrack] = Field(default_factory=list)
 
 
 class SpotifyTrackResponse(BaseModel):
@@ -48,5 +49,5 @@ class SpotifyTrackResponse(BaseModel):
 
 
 class SessionQueueResponse(BaseModel):
-    currently_playing: SpotifyTrack
-    queue: List[SpotifyTrack]
+    currently_playing: Optional[SpotifyTrack] = None
+    queue: List[SpotifyTrack] = Field(default_factory=list)

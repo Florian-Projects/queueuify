@@ -10,20 +10,26 @@ router = APIRouter()
 @router.get("/search")
 @requires(["authenticated"])
 async def search_song_on_spotify(request: Request, song_name: str):
-    user = await request.user
-    if not song_name.strip():
+    user = request.user
+    normalized_query = song_name.strip()
+    if not normalized_query:
         return {"tracks": {"items": []}}
 
     if user.access_token:
-        spotify_connector = await SpotifyConnector.create(user=user)
+        async with await SpotifyConnector.create(user=user) as spotify_connector:
+            response = await spotify_connector.search_song(normalized_query)
+            return response
     else:
         session = await get_active_session(user)
         session_owner = await session.owner if session else None
 
         if session_owner and session_owner.access_token:
-            spotify_connector = await SpotifyConnector.create(user=session_owner)
+            async with await SpotifyConnector.create(
+                user=session_owner
+            ) as spotify_connector:
+                response = await spotify_connector.search_song(normalized_query)
+                return response
         else:
-            spotify_connector = await SpotifyConnector.create()
-
-    response = await spotify_connector.search_song(song_name)
-    return response
+            async with await SpotifyConnector.create() as spotify_connector:
+                response = await spotify_connector.search_song(normalized_query)
+                return response

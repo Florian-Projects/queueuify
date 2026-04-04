@@ -2,7 +2,6 @@ import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
   HttpClientTestingModule,
-  HttpTestingController,
 } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -10,12 +9,10 @@ import { BehaviorSubject, of } from 'rxjs';
 import { LoginService } from '../login.service';
 import { SessionService } from '../session-manager/session.service';
 import { OauthCallbackComponent } from './oauth-callback.component';
-import { environment } from '../../environments/environments';
 
 describe('OauthCallbackComponent', () => {
   let component: OauthCallbackComponent;
   let fixture: ComponentFixture<OauthCallbackComponent>;
-  let httpMock: HttpTestingController;
   let router: Router;
   let queryParams$: BehaviorSubject<Record<string, string>>;
   let loginServiceSpy: jasmine.SpyObj<LoginService>;
@@ -28,12 +25,20 @@ describe('OauthCallbackComponent', () => {
     });
     loginServiceSpy = jasmine.createSpyObj<LoginService>('LoginService', [
       'getState',
-      'storeSessionToken',
+      'completeSpotifyLogin',
     ]);
     sessionServiceSpy = jasmine.createSpyObj<SessionService>('SessionService', [
       'fetchSessionStateRequest',
     ]);
     loginServiceSpy.getState.and.returnValue('expected');
+    loginServiceSpy.completeSpotifyLogin.and.returnValue(
+      of({
+        api_token: 'token-123',
+        auth_mode: 'spotify',
+        can_host_sessions: true,
+        display_name: 'Spotify User',
+      }),
+    );
     sessionServiceSpy.fetchSessionStateRequest.and.returnValue(
       of({
         isInSession: false,
@@ -58,14 +63,9 @@ describe('OauthCallbackComponent', () => {
       schemas: [NO_ERRORS_SCHEMA],
     });
 
-    httpMock = TestBed.inject(HttpTestingController);
     router = TestBed.inject(Router);
     fixture = TestBed.createComponent(OauthCallbackComponent);
     component = fixture.componentInstance;
-  });
-
-  afterEach(() => {
-    httpMock.verify();
   });
 
   it('should create', () => {
@@ -84,17 +84,9 @@ describe('OauthCallbackComponent', () => {
 
     fixture.detectChanges();
 
-    const request = httpMock.expectOne(environment.apiURL + '/exchange_oauth_code');
-    expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual({
-      code: 'spotify-code',
-      state: 'expected',
-    });
-    request.flush({ api_token: 'token-123' });
-
-    expect(loginServiceSpy.storeSessionToken).toHaveBeenCalledOnceWith(
-      'token-123',
-      'spotify',
+    expect(loginServiceSpy.completeSpotifyLogin).toHaveBeenCalledOnceWith(
+      'spotify-code',
+      'expected',
     );
     expect(sessionServiceSpy.fetchSessionStateRequest).toHaveBeenCalledTimes(1);
     expect(navigateSpy).toHaveBeenCalledOnceWith('/search');
@@ -112,7 +104,7 @@ describe('OauthCallbackComponent', () => {
     fixture.detectChanges();
 
     expect(alertSpy).toHaveBeenCalledOnceWith('Login Failed');
-    expect(loginServiceSpy.storeSessionToken).not.toHaveBeenCalled();
+    expect(loginServiceSpy.completeSpotifyLogin).not.toHaveBeenCalled();
     expect(sessionServiceSpy.fetchSessionStateRequest).not.toHaveBeenCalled();
     expect(navigateSpy).toHaveBeenCalledOnceWith('/');
   });
