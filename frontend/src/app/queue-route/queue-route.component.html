@@ -4,7 +4,7 @@
       <p class="queue-route__eyebrow">Queue</p>
       <h1>Playback order</h1>
       <p class="queue-route__subtitle">
-        Inspect the active queue and refresh it against the host Spotify player.
+        Inspect the room queue and the host's live Spotify playback state.
       </p>
     </div>
     <button class="queue-route__button" type="button" (click)="refreshQueue()">
@@ -13,6 +13,9 @@
   </header>
 
   <p class="queue-route__error" *ngIf="error">{{ error }}</p>
+  <p class="queue-route__error" *ngIf="!error && playbackBlockMessage">
+    {{ playbackBlockMessage }}
+  </p>
 
   <div class="queue-route__grid">
     <article class="queue-route__panel">
@@ -33,39 +36,84 @@
           <p>{{ trackArtistLine(track) }}</p>
         </div>
       </div>
+
+      <div class="queue-route__playback-meter" *ngIf="currentTrack">
+        <div class="queue-route__playback-times">
+          <span>{{ playbackProgress.elapsedLabel }}</span>
+          <span>{{ playbackProgress.durationLabel }}</span>
+        </div>
+        <div class="queue-route__playback-progress" aria-hidden="true">
+          <span [style.width.%]="playbackProgress.progressPercent"></span>
+        </div>
+      </div>
     </article>
 
     <section class="queue-route__panel">
       <div class="queue-route__panel-header">
-        <p class="queue-route__label">Upcoming</p>
-        <span class="queue-route__count">{{ queuedTracks.length }} tracks</span>
+        <p class="queue-route__label">Room Queue</p>
+        <span class="queue-route__count">{{ queueItems.length }} tracks</span>
       </div>
 
       <div class="queue-route__empty" *ngIf="isLoading">Loading queue...</div>
-      <div class="queue-route__empty" *ngIf="!isLoading && !queuedTracks.length">
+      <div class="queue-route__empty" *ngIf="!isLoading && !queueItems.length">
         The queue is currently empty.
       </div>
 
-      <article class="queue-route__row" *ngFor="let track of queuedTracks; let index = index">
+      <article class="queue-route__row" *ngFor="let item of queueItems; let index = index">
         <span class="queue-route__index">{{ index + 1 | number: '2.0-0' }}</span>
         <img
           class="queue-route__thumb"
-          [src]="track.album?.images?.[0]?.url"
-          [alt]="track.name || 'Queued track artwork'"
+          [src]="item.track.album?.images?.[0]?.url"
+          [alt]="item.track.name || 'Queued track artwork'"
         />
         <div class="queue-route__meta">
-          <h3>{{ track.name }}</h3>
-          <p>{{ trackArtistLine(track) }}</p>
+          <h3>{{ item.track.name }}</h3>
+          <p>{{ trackArtistLine(item.track) }}</p>
+          <p *ngIf="item.submitted_by">Queued by {{ item.submitted_by }}</p>
+          <p *ngIf="!item.submitted_by">{{ item.provider_dispatch_state }}</p>
         </div>
         <div class="queue-route__actions" *ngIf="sessionState.isOwner">
-          <button class="queue-route__icon-button" type="button" disabled>
+          <button
+            class="queue-route__icon-button"
+            type="button"
+            [disabled]="!item.can_play_now || isBusy(item)"
+            (click)="onPlayNow(item)"
+          >
             Play Now
           </button>
-          <button class="queue-route__icon-button" type="button" disabled>
+          <button
+            class="queue-route__icon-button"
+            type="button"
+            [disabled]="!item.can_remove || isBusy(item)"
+            (click)="onRemove(item)"
+          >
             Remove
           </button>
         </div>
       </article>
     </section>
   </div>
+
+  <section class="queue-route__panel" *ngIf="externalItems.length">
+    <div class="queue-route__panel-header">
+      <p class="queue-route__label">Host Spotify Queue</p>
+      <span class="queue-route__count">{{ externalItems.length }} tracks</span>
+    </div>
+
+    <article
+      class="queue-route__row"
+      *ngFor="let item of externalItems; let index = index"
+    >
+      <span class="queue-route__index">{{ index + 1 | number: '2.0-0' }}</span>
+      <img
+        class="queue-route__thumb"
+        [src]="item.track.album?.images?.[0]?.url"
+        [alt]="item.track.name || 'Spotify queue artwork'"
+      />
+      <div class="queue-route__meta">
+        <h3>{{ item.track.name }}</h3>
+        <p>{{ trackArtistLine(item.track) }}</p>
+      </div>
+    </article>
+  </section>
 </section>

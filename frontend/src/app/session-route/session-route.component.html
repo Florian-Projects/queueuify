@@ -4,18 +4,15 @@
       <p class="session-route__eyebrow">Session</p>
       <h1>Room controls</h1>
       <p class="session-route__subtitle">
-        Share your code and manage the current listening room.
+        Share your code, lock room access, and control how playback fans out.
       </p>
     </div>
   </header>
 
   <div class="session-route__grid">
-    <article class="session-route__panel">
+    <article class="session-route__panel session-route__panel--hero">
       <p class="session-route__label">Session Code</p>
       <div class="session-route__code">{{ sessionCode }}</div>
-      <p class="session-route__copy">
-        Guests can join this room with the current session code.
-      </p>
 
       <div class="session-route__actions">
         <button
@@ -41,6 +38,41 @@
         </button>
       </div>
 
+      <div class="session-route__qr-block" *ngIf="sessionJoinUrl">
+        <div class="session-route__qr-frame" *ngIf="qrCodeDataUrl; else qrFallback">
+          <img
+            class="session-route__qr-image"
+            [src]="qrCodeDataUrl"
+            [alt]="'Scan to join Queueify session ' + sessionCode"
+          />
+        </div>
+        <ng-template #qrFallback>
+          <div class="session-route__qr-frame session-route__qr-frame--fallback">
+            <span class="material-symbols-outlined">qr_code_2</span>
+          </div>
+        </ng-template>
+
+        <p class="session-route__copy">
+          Scan to open Queueify and join this session.
+        </p>
+        <div class="session-route__qr-actions">
+          <button
+            class="session-route__button session-route__button--ghost"
+            type="button"
+            (click)="onCopySessionLink()"
+          >
+            Copy Link
+          </button>
+          <button
+            class="session-route__button session-route__button--ghost"
+            type="button"
+            (click)="onShareSessionLink()"
+          >
+            Share Link
+          </button>
+        </div>
+      </div>
+
       <p class="session-route__feedback" *ngIf="feedbackMessage">
         {{ feedbackMessage }}
       </p>
@@ -48,43 +80,129 @@
 
     <article class="session-route__panel" *ngIf="sessionState.isOwner; else memberInfo">
       <p class="session-route__label">Host Settings</p>
-      <h2>Backend wiring still pending</h2>
+      <h2>Control room access and playback</h2>
       <p class="session-route__copy">
-        The settings from the approved Session design are shown here for testing
-        visibility, but they still need dedicated backend endpoints.
+        These settings update the live room immediately and stay enforced by the
+        backend.
       </p>
 
-      <div class="session-route__settings">
-        <div class="session-route__setting">
-          <div>
-            <h3>Disallow anonymous users</h3>
-            <p>Restrict room entry to Spotify-authenticated members only.</p>
+      <div class="session-route__loading" *ngIf="isLoadingSettings">
+        Loading room settings...
+      </div>
+
+      <div *ngIf="!isLoadingSettings && settings as liveSettings">
+        <div class="session-route__settings">
+          <div class="session-route__setting">
+            <div>
+              <h3>Disallow anonymous users</h3>
+              <p>Require Spotify-authenticated users to join this room.</p>
+            </div>
+            <button
+              class="session-route__toggle"
+              type="button"
+              [class.session-route__toggle--active]="liveSettings.disallow_anonymous_users"
+              [disabled]="isSavingSettings"
+              (click)="onToggleDisallowAnonymousUsers(!liveSettings.disallow_anonymous_users)"
+            >
+              <span></span>
+            </button>
           </div>
-          <button class="session-route__button session-route__button--disabled" type="button" disabled>
-            Unavailable
-          </button>
+
+          <div class="session-route__setting session-route__setting--stacked">
+            <div>
+              <h3>Session type</h3>
+              <p>Choose whether playback stays on the host or fans out to ready members.</p>
+            </div>
+            <div class="session-route__segment">
+              <button
+                class="session-route__segment-button"
+                type="button"
+                [class.session-route__segment-button--active]="liveSettings.session_type === 'host_only'"
+                [disabled]="isSavingSettings"
+                (click)="onSetSessionType('host_only')"
+              >
+                Host Only
+              </button>
+              <span
+                class="session-route__segment-tooltip"
+                [attr.title]="everyoneModeTooltip || null"
+              >
+                <button
+                  class="session-route__segment-button"
+                  type="button"
+                  [class.session-route__segment-button--active]="liveSettings.session_type === 'everyone'"
+                  [class.session-route__segment-button--blocked]="everyoneModeDisabled"
+                  [disabled]="isSavingSettings || everyoneModeDisabled"
+                  (click)="onSetSessionType('everyone')"
+                >
+                  Everyone
+                </button>
+              </span>
+            </div>
+            <p class="session-route__hint">
+              Everyone mode requires Disallow anonymous users.
+            </p>
+          </div>
+
+          <div class="session-route__setting">
+            <div>
+              <h3>Explicit filter</h3>
+              <p>Block explicit tracks from being queued or started in this room.</p>
+            </div>
+            <button
+              class="session-route__toggle"
+              type="button"
+              [class.session-route__toggle--active]="liveSettings.explicit_filter"
+              [disabled]="isSavingSettings"
+              (click)="onToggleExplicitFilter(!liveSettings.explicit_filter)"
+            >
+              <span></span>
+            </button>
+          </div>
         </div>
 
-        <div class="session-route__setting">
-          <div>
-            <h3>Session type</h3>
-            <p>Switch between Host only and Everyone queueing.</p>
+        <div class="session-route__sync-panel">
+          <div class="session-route__sync-header">
+            <div>
+              <p class="session-route__label">Everyone Playback</p>
+              <h3>{{ sessionTypeLabel(liveSettings.session_type) }}</h3>
+            </div>
+            <div class="session-route__sync-counts">
+              <span>{{ liveSettings.everyone_playback_status.ready_member_count }} ready</span>
+              <span>{{ liveSettings.everyone_playback_status.unsynced_member_count }} blocked</span>
+            </div>
           </div>
-          <button class="session-route__button session-route__button--disabled" type="button" disabled>
-            Unavailable
-          </button>
-        </div>
+          <p class="session-route__copy">{{ everyoneSummary }}</p>
 
-        <div class="session-route__setting">
-          <div>
-            <h3>Explicit filter</h3>
-            <p>Prevent explicit tracks from entering the room queue.</p>
+          <div class="session-route__sync-list">
+            <article
+              class="session-route__sync-row"
+              *ngFor="let member of liveSettings.member_sync_status"
+            >
+              <div class="session-route__sync-copy">
+                <div class="session-route__sync-title">
+                  <h4>{{ member.display_name }}</h4>
+                  <span class="session-route__host-badge" *ngIf="member.is_host">
+                    Host
+                  </span>
+                </div>
+                <p>{{ member.status_message }}</p>
+              </div>
+              <span
+                class="session-route__sync-pill"
+                [ngClass]="syncStateClass(member)"
+              >
+                {{ syncStateLabel(member) }}
+              </span>
+            </article>
           </div>
-          <button class="session-route__button session-route__button--disabled" type="button" disabled>
-            Unavailable
-          </button>
         </div>
       </div>
+
+      <p class="session-route__error" *ngIf="settingsError">{{ settingsError }}</p>
+      <p class="session-route__feedback" *ngIf="settingsFeedback">
+        {{ settingsFeedback }}
+      </p>
     </article>
   </div>
 </section>

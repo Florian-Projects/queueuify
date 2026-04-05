@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   BehaviorSubject,
   catchError,
@@ -21,6 +22,8 @@ import {
   styleUrls: ['./search-route.component.scss'],
 })
 export class SearchRouteComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+
   protected query = '';
   protected sessionState: sessionState = {
     isInSession: false,
@@ -31,8 +34,10 @@ export class SearchRouteComponent implements OnInit {
   protected isLoadingResults = true;
   protected searchError = '';
   protected queueError = '';
+  protected queueFeedback = '';
   protected readonly addingTrackUris = new Set<string>();
   protected readonly addedTrackUris = new Set<string>();
+  protected readonly playingTrackUris = new Set<string>();
 
   private readonly query$ = new BehaviorSubject('');
 
@@ -43,9 +48,11 @@ export class SearchRouteComponent implements OnInit {
 
   ngOnInit(): void {
     this.sessionState = this.sessionService.getSessionState();
-    this.sessionService.sessionChanged.subscribe((sessionState: sessionState) => {
-      this.sessionState = sessionState;
-    });
+    this.sessionService.sessionChanged
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((sessionState: sessionState) => {
+        this.sessionState = sessionState;
+      });
 
     this.query$
       .pipe(
@@ -78,6 +85,7 @@ export class SearchRouteComponent implements OnInit {
           );
         }),
       )
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => {
         this.results = response?.tracks?.items ?? [];
         this.isLoadingResults = false;
@@ -121,11 +129,24 @@ export class SearchRouteComponent implements OnInit {
     }
 
     this.queueError = '';
+    this.queueFeedback = '';
     this.addingTrackUris.add(track.uri);
-    this.sessionService.addSongToQueueRequest(track.uri).subscribe({
-      next: () => {
+    this.sessionService.addSongToQueueRequest(track).subscribe({
+      next: (queueResponse) => {
         this.addingTrackUris.delete(track.uri as string);
         this.addedTrackUris.add(track.uri as string);
+        if (
+          queueResponse.playback_status.dispatch_block_reason ===
+          'no_ready_member_device'
+        ) {
+          this.queueFeedback =
+            'Added to the room queue. It will sync once a joined Spotify member activates a controllable device.';
+        } else if (queueResponse.playback_status.dispatch_block_reason) {
+          this.queueFeedback =
+            'Added to the room queue. It will sync once the host starts playback.';
+        } else {
+          this.queueFeedback = 'Added to the room queue.';
+        }
       },
       error: (error) => {
         this.addingTrackUris.delete(track.uri as string);
@@ -133,6 +154,32 @@ export class SearchRouteComponent implements OnInit {
           error?.error?.detail ??
           error?.error?.details ??
           'Could not add that track to the queue.';
+      },
+    });
+  }
+
+  protected onPlayNow(track: SpotifyTrack): void {
+    if (!track.uri || this.playingTrackUris.has(track.uri)) {
+      return;
+    }
+
+    this.queueError = '';
+    this.queueFeedback = '';
+    this.playingTrackUris.add(track.uri);
+    this.sessionService.playTrackNowRequest(track).subscribe({
+      next: () => {
+        this.playingTrackUris.delete(track.uri as string);
+        this.queueFeedback =
+          this.sessionState.sessionType === 'everyone'
+            ? 'Playback started on the joined Spotify devices that are ready.'
+            : 'Playback started on the host device.';
+      },
+      error: (error) => {
+        this.playingTrackUris.delete(track.uri as string);
+        this.queueError =
+          error?.error?.detail ??
+          error?.error?.details ??
+          'Could not start playback on the host device.';
       },
     });
   }
@@ -151,5 +198,13 @@ export class SearchRouteComponent implements OnInit {
     }
 
     return 'Add to Queue';
+  }
+
+  protected playNowLabel(track: SpotifyTrack): string {
+    if (track.uri && this.playingTrackUris.has(track.uri)) {
+      return 'Starting...';
+    }
+
+    return 'Play Now';
   }
 }

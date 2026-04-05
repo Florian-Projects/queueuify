@@ -1,8 +1,6 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import {
-  HttpClientTestingModule,
-} from '@angular/common/http/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { BehaviorSubject, of } from 'rxjs';
@@ -26,11 +24,16 @@ describe('OauthCallbackComponent', () => {
     loginServiceSpy = jasmine.createSpyObj<LoginService>('LoginService', [
       'getState',
       'completeSpotifyLogin',
+      'getPendingJoinCode',
+      'clearPendingJoinCode',
     ]);
     sessionServiceSpy = jasmine.createSpyObj<SessionService>('SessionService', [
       'fetchSessionStateRequest',
+      'joinSessionRequest',
+      'normalizeSessionToken',
     ]);
     loginServiceSpy.getState.and.returnValue('expected');
+    loginServiceSpy.getPendingJoinCode.and.returnValue(null);
     loginServiceSpy.completeSpotifyLogin.and.returnValue(
       of({
         api_token: 'token-123',
@@ -39,6 +42,9 @@ describe('OauthCallbackComponent', () => {
         display_name: 'Spotify User',
       }),
     );
+    sessionServiceSpy.normalizeSessionToken.and.callFake(
+      (sessionToken: string) => sessionToken.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 6),
+    );
     sessionServiceSpy.fetchSessionStateRequest.and.returnValue(
       of({
         isInSession: false,
@@ -46,6 +52,7 @@ describe('OauthCallbackComponent', () => {
         isOwner: false,
       }),
     );
+    sessionServiceSpy.joinSessionRequest.and.returnValue(of({}));
 
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule, RouterTestingModule],
@@ -90,6 +97,17 @@ describe('OauthCallbackComponent', () => {
     );
     expect(sessionServiceSpy.fetchSessionStateRequest).toHaveBeenCalledTimes(1);
     expect(navigateSpy).toHaveBeenCalledOnceWith('/search');
+  });
+
+  it('joins the linked session after Spotify login when a pending join code exists', () => {
+    const navigateSpy = spyOn(router, 'navigateByUrl').and.resolveTo(true);
+    loginServiceSpy.getPendingJoinCode.and.returnValue('ab12cd');
+
+    fixture.detectChanges();
+
+    expect(sessionServiceSpy.joinSessionRequest).toHaveBeenCalledOnceWith('AB12CD');
+    expect(loginServiceSpy.clearPendingJoinCode).toHaveBeenCalled();
+    expect(navigateSpy).toHaveBeenCalledWith('/search');
   });
 
   it('routes back to landing when the OAuth state is invalid', () => {

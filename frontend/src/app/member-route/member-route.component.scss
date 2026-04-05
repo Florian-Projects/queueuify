@@ -43,7 +43,8 @@
 .member-route__subtitle,
 .member-route__meta p,
 .member-route__count,
-.member-route__empty {
+.member-route__empty,
+.member-route__feedback {
   margin: 0;
   color: var(--text-secondary);
   line-height: 1.6;
@@ -78,6 +79,7 @@
 .member-route__row {
   padding: 1rem 0;
   border-top: 1px solid var(--outline-ghost);
+  flex-wrap: wrap;
 }
 
 .member-route__actions {
@@ -87,9 +89,30 @@
   gap: 0.5rem;
 }
 
+.member-route__timeout-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.member-route__option {
+  min-height: 2.5rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--outline-ghost);
+  border-radius: 999px;
+  background: rgba(27, 31, 39, 0.92);
+  color: var(--text-primary);
+}
+
 .member-route__error {
   margin: 0 0 1rem;
   color: #fda4af;
+}
+
+.member-route__feedback {
+  margin: 0 0 1rem;
+  color: #86efac;
 }
 
 @media (min-width: 960px) {

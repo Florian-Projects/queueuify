@@ -17,7 +17,7 @@ export class SongComponent {
 
   protected onAddToQueue(song: SpotifyTrack) {
     if (song.uri) {
-      this.sessionService.addSongToQueue(song.uri);
+      this.sessionService.addSongToQueue(song);
     }
   }
 

@@ -8,10 +8,12 @@ import oauth.oauth
 from models import User
 from oauth.oauth import spotify_oauth
 from spotify_connector.models import (
+    SpotifyAvailableDevicesResponse,
+    SpotifyPlaybackStateResponse,
     UserDetailResponse,
+    SessionQueueResponse,
     SpotifyTrack,
     SpotifyTrackResponse,
-    SessionQueueResponse,
 )
 
 
@@ -100,8 +102,12 @@ class SpotifyConnector:
         self,
         *args,
         already_tried=False,
+        allowed_statuses=None,
         **kwargs,
     ):
+        if allowed_statuses is None:
+            allowed_statuses = set()
+
         try:
             response = await self.client.request(*args, **kwargs)
         except httpx.TimeoutException as exc:
@@ -119,7 +125,15 @@ class SpotifyConnector:
             await self._refresh_authentication()
             # retry only once with the new token
             if not already_tried:
-                return await self.send_request(*args, **kwargs, already_tried=True)
+                return await self.send_request(
+                    *args,
+                    **kwargs,
+                    already_tried=True,
+                    allowed_statuses=allowed_statuses,
+                )
+
+        if response.status_code in allowed_statuses:
+            return response
 
         if response.status_code >= 300:
             raise SpotifyException(
@@ -133,9 +147,13 @@ class SpotifyConnector:
         response = await self.send_request(method="get", url="/me")
         return UserDetailResponse(**response.json())
 
-    async def add_song_to_queue(self, song_uri):
+    async def add_song_to_queue(self, song_uri, device_id: Optional[str] = None):
+        params = {"uri": song_uri}
+        if device_id:
+            params["device_id"] = device_id
+
         _ = await self.send_request(
-            method="post", url="/me/player/queue", params={"uri": song_uri}
+            method="post", url="/me/player/queue", params=params
         )
 
         return True
@@ -148,8 +166,19 @@ class SpotifyConnector:
         )
         return SpotifyTrackResponse(**response.json())
 
+    async def get_track(self, track_id: str):
+        response = await self.send_request(method="get", url=f"/tracks/{track_id}")
+        return SpotifyTrack(**response.json())
+
     async def get_current_queue(self):
-        response = await self.send_request(method="get", url="/me/player/queue")
+        response = await self.send_request(
+            method="get",
+            url="/me/player/queue",
+            allowed_statuses={HTTPStatus.NO_CONTENT.value},
+        )
+        if response.status_code == HTTPStatus.NO_CONTENT.value:
+            return SessionQueueResponse()
+
         payload = response.json()
         data = {
             "currently_playing": (
@@ -162,3 +191,76 @@ class SpotifyConnector:
             ],
         }
         return SessionQueueResponse(**data)
+
+    async def get_playback_state(self):
+        response = await self.send_request(
+            method="get",
+            url="/me/player",
+            allowed_statuses={HTTPStatus.NO_CONTENT.value},
+        )
+        if response.status_code == HTTPStatus.NO_CONTENT.value:
+            return None
+
+        return SpotifyPlaybackStateResponse(**response.json())
+
+    async def get_available_devices(self):
+        response = await self.send_request(method="get", url="/me/player/devices")
+        return SpotifyAvailableDevicesResponse(**response.json())
+
+    async def start_playback(
+        self,
+        *,
+        uris: Optional[list[str]] = None,
+        device_id: Optional[str] = None,
+    ):
+        params = {}
+        if device_id:
+            params["device_id"] = device_id
+
+        json_body = {}
+        if uris:
+            json_body["uris"] = uris
+
+        await self.send_request(
+            method="put",
+            url="/me/player/play",
+            params=params or None,
+            json=json_body or None,
+        )
+        return True
+
+    async def pause_playback(self, *, device_id: Optional[str] = None):
+        params = {}
+        if device_id:
+            params["device_id"] = device_id
+
+        await self.send_request(
+            method="put",
+            url="/me/player/pause",
+            params=params or None,
+        )
+        return True
+
+    async def skip_to_next(self, *, device_id: Optional[str] = None):
+        params = {}
+        if device_id:
+            params["device_id"] = device_id
+
+        await self.send_request(
+            method="post",
+            url="/me/player/next",
+            params=params or None,
+        )
+        return True
+
+    async def skip_to_previous(self, *, device_id: Optional[str] = None):
+        params = {}
+        if device_id:
+            params["device_id"] = device_id
+
+        await self.send_request(
+            method="post",
+            url="/me/player/previous",
+            params=params or None,
+        )
+        return True

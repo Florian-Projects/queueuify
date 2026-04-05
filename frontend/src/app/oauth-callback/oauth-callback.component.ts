@@ -28,8 +28,58 @@ export class OauthCallbackComponent implements OnInit {
 
       this.loginService.completeSpotifyLogin(code, state).subscribe({
         next: () => {
-          this.sessionService.fetchSessionStateRequest().subscribe((sessionState) => {
-            this.router.navigateByUrl(sessionState.isInSession ? '/search' : '/');
+          const pendingJoinCode = this.normalizePendingJoinCode();
+          this.sessionService.fetchSessionStateRequest().subscribe({
+            next: (sessionState) => {
+              if (!pendingJoinCode) {
+                this.router.navigateByUrl(sessionState.isInSession ? '/search' : '/');
+                return;
+              }
+
+              if (sessionState.isInSession) {
+                if (sessionState.sessionToken === pendingJoinCode) {
+                  this.loginService.clearPendingJoinCode();
+                  this.router.navigateByUrl('/search');
+                  return;
+                }
+
+                this.redirectToLandingWithError(
+                  pendingJoinCode,
+                  'Leave your current session before joining a different room.',
+                );
+                return;
+              }
+
+              this.sessionService.joinSessionRequest(pendingJoinCode).subscribe({
+                next: () => {
+                  this.loginService.clearPendingJoinCode();
+                  this.router.navigateByUrl('/search');
+                },
+                error: (error) => {
+                  this.redirectToLandingWithError(
+                    pendingJoinCode,
+                    this.extractErrorMessage(
+                      error,
+                      'Could not join that session.',
+                    ),
+                  );
+                },
+              });
+            },
+            error: (error) => {
+              if (!pendingJoinCode) {
+                this.router.navigateByUrl('/');
+                return;
+              }
+
+              this.redirectToLandingWithError(
+                pendingJoinCode,
+                this.extractErrorMessage(
+                  error,
+                  'Could not restore your session after login.',
+                ),
+              );
+            },
           });
         },
         error: () => {
@@ -37,5 +87,33 @@ export class OauthCallbackComponent implements OnInit {
         },
       });
     });
+  }
+
+  private normalizePendingJoinCode(): string | null {
+    const pendingJoinCode = this.loginService.getPendingJoinCode();
+    if (!pendingJoinCode) {
+      return null;
+    }
+
+    const normalizedCode = this.sessionService.normalizeSessionToken(pendingJoinCode);
+    return normalizedCode.length === 6 ? normalizedCode : null;
+  }
+
+  private redirectToLandingWithError(joinCode: string, message: string): void {
+    this.loginService.clearPendingJoinCode();
+    this.router.navigate(['/'], {
+      queryParams: {
+        join: joinCode,
+        joinError: message,
+      },
+    });
+  }
+
+  private extractErrorMessage(error: any, fallbackMessage: string): string {
+    return (
+      error?.error?.detail ??
+      error?.error?.details ??
+      fallbackMessage
+    );
   }
 }

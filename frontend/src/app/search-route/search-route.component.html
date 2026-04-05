@@ -38,6 +38,9 @@
   <p class="search-route__message search-route__message--error" *ngIf="queueError">
     {{ queueError }}
   </p>
+  <p class="search-route__message" *ngIf="queueFeedback">
+    {{ queueFeedback }}
+  </p>
 
   <div class="search-route__loading" *ngIf="isLoadingResults">
     <div class="search-route__loading-card">
@@ -72,12 +75,13 @@
             <div class="search-route__featured-actions">
               <button
                 *ngIf="sessionState.isOwner"
-                class="search-route__button search-route__button--primary search-route__button--disabled"
+                class="search-route__button search-route__button--primary"
                 type="button"
-                disabled
+                [disabled]="!track.uri || playNowLabel(track) !== 'Play Now'"
+                (click)="onPlayNow(track)"
               >
                 <span class="material-symbols-outlined">play_arrow</span>
-                <span>Play Now</span>
+                <span>{{ playNowLabel(track) }}</span>
               </button>
               <button
                 class="search-route__button search-route__button--ghost"
@@ -141,9 +145,10 @@
           <div class="search-route__list-actions">
             <button
               *ngIf="sessionState.isOwner"
-              class="search-route__icon-button search-route__icon-button--disabled"
+              class="search-route__icon-button"
               type="button"
-              disabled
+              [disabled]="!track.uri || playNowLabel(track) !== 'Play Now'"
+              (click)="onPlayNow(track)"
             >
               <span class="material-symbols-outlined">play_circle</span>
             </button>

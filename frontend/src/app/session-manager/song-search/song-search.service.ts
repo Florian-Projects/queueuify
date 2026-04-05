@@ -19,6 +19,8 @@ interface SpotifyArtist {
 export interface SpotifyTrack {
   album?: SpotifyAlbum | null;
   artists: SpotifyArtist[];
+  duration_ms?: number | null;
+  explicit?: boolean | null;
   external_urls?: Record<string, string> | null;
   href?: string | null;
   id?: string | null;

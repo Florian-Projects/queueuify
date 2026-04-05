@@ -2,7 +2,6 @@
   <aside class="session-shell__sidebar">
     <div class="session-shell__brand">
       <p class="session-shell__brand-name">Queueify</p>
-      <p class="session-shell__brand-tag">Sonic Obsidian</p>
     </div>
 
     <nav class="session-shell__nav" aria-label="Session navigation">
@@ -25,21 +24,17 @@
         <p class="session-shell__topbar-brand">Queueify</p>
         <span class="session-shell__chip">Live Session</span>
       </div>
-
-      <div class="session-shell__topbar-right" aria-hidden="true">
-        <span class="material-symbols-outlined">notifications</span>
-        <span class="material-symbols-outlined">settings</span>
-        <span class="session-shell__avatar">
-          <span class="material-symbols-outlined">account_circle</span>
-        </span>
-      </div>
     </header>
 
     <div class="session-shell__content">
       <router-outlet></router-outlet>
     </div>
 
-    <div class="session-shell__now-playing" *ngIf="currentTrack">
+    <div
+      class="session-shell__now-playing"
+      *ngIf="currentTrack"
+      [class.session-shell__now-playing--readonly]="!sessionState.isOwner"
+    >
       <img
         class="session-shell__now-playing-art"
         [src]="currentTrack.album?.images?.[0]?.url"
@@ -51,15 +46,48 @@
           {{ currentTrackArtistLine }}
         </p>
       </div>
-      <div class="session-shell__now-playing-controls" aria-hidden="true">
-        <span class="material-symbols-outlined">skip_previous</span>
-        <span class="session-shell__now-playing-play">
-          <span class="material-symbols-outlined">pause</span>
-        </span>
-        <span class="material-symbols-outlined">skip_next</span>
+      <div
+        class="session-shell__now-playing-controls"
+        *ngIf="sessionState.isOwner"
+      >
+        <button
+          class="session-shell__now-playing-control"
+          type="button"
+          [disabled]="!canControlPlayback || playbackControlPending !== null"
+          aria-label="Previous track"
+          (click)="onSkipPrevious()"
+        >
+          <span class="material-symbols-outlined">skip_previous</span>
+        </button>
+        <button
+          class="session-shell__now-playing-play"
+          type="button"
+          [disabled]="!canControlPlayback || playbackControlPending !== null"
+          [attr.aria-label]="isPlaying ? 'Pause playback' : 'Resume playback'"
+          (click)="onTogglePlayback()"
+        >
+          <span class="material-symbols-outlined">
+            {{ isPlaying ? 'pause' : 'play_arrow' }}
+          </span>
+        </button>
+        <button
+          class="session-shell__now-playing-control"
+          type="button"
+          [disabled]="!canControlPlayback || playbackControlPending !== null"
+          aria-label="Next track"
+          (click)="onSkipNext()"
+        >
+          <span class="material-symbols-outlined">skip_next</span>
+        </button>
       </div>
-      <div class="session-shell__now-playing-progress">
-        <span></span>
+      <div class="session-shell__now-playing-meter">
+        <div class="session-shell__now-playing-times">
+          <span>{{ playbackProgress.elapsedLabel }}</span>
+          <span>{{ playbackProgress.durationLabel }}</span>
+        </div>
+        <div class="session-shell__now-playing-progress">
+          <span [style.width.%]="playbackProgress.progressPercent"></span>
+        </div>
       </div>
     </div>
 

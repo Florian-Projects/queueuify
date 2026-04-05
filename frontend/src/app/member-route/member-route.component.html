@@ -26,11 +26,12 @@
 <ng-template #memberList>
   <section class="member-route__panel">
     <div class="member-route__panel-header">
-      <p class="member-route__label">Active members</p>
+      <p class="member-route__label">Room roster</p>
       <span class="member-route__count">{{ members.length }} members</span>
     </div>
 
     <p class="member-route__error" *ngIf="error">{{ error }}</p>
+    <p class="member-route__feedback" *ngIf="feedback">{{ feedback }}</p>
     <div class="member-route__empty" *ngIf="isLoading">Loading members...</div>
     <div class="member-route__empty" *ngIf="!isLoading && !members.length && !error">
       No members have joined this room yet.
@@ -39,12 +40,73 @@
     <article class="member-route__row" *ngFor="let member of members">
       <div class="member-route__meta">
         <h3>{{ member.display_name }}</h3>
-        <p>{{ member.id }}</p>
+        <p>{{ memberStatusLine(member) }}</p>
       </div>
       <div class="member-route__actions">
-        <button class="member-route__action" type="button" disabled>Ban</button>
-        <button class="member-route__action" type="button" disabled>Timeout</button>
-        <button class="member-route__action" type="button" disabled>Kick</button>
+        <button
+          *ngIf="member.can_unban"
+          class="member-route__action"
+          type="button"
+          [disabled]="isBusy(member)"
+          (click)="onUnban(member)"
+        >
+          Unban
+        </button>
+
+        <button
+          *ngIf="member.can_unmute"
+          class="member-route__action"
+          type="button"
+          [disabled]="isBusy(member)"
+          (click)="onUnmute(member)"
+        >
+          Unmute
+        </button>
+
+        <button
+          *ngIf="member.can_timeout"
+          class="member-route__action"
+          type="button"
+          [disabled]="isBusy(member)"
+          (click)="openTimeoutOptions(member)"
+        >
+          Timeout
+        </button>
+
+        <button
+          *ngIf="member.can_ban"
+          class="member-route__action"
+          type="button"
+          [disabled]="isBusy(member)"
+          (click)="onBan(member)"
+        >
+          Ban
+        </button>
+
+        <button
+          *ngIf="member.can_kick"
+          class="member-route__action"
+          type="button"
+          [disabled]="isBusy(member)"
+          (click)="onKick(member)"
+        >
+          Kick
+        </button>
+      </div>
+
+      <div
+        class="member-route__timeout-options"
+        *ngIf="showTimeoutOptions(member) && member.can_timeout"
+      >
+        <button
+          class="member-route__option"
+          type="button"
+          [disabled]="isBusy(member)"
+          *ngFor="let option of timeoutOptions"
+          (click)="onTimeout(member, option)"
+        >
+          {{ option === 60 ? '1 hour' : option + ' min' }}
+        </button>
       </div>
     </article>
   </section>

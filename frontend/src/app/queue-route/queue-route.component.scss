@@ -50,7 +50,8 @@
 .queue-route__current p,
 .queue-route__meta p,
 .queue-route__empty,
-.queue-route__count {
+.queue-route__count,
+.queue-route__playback-times {
   margin: 0;
   color: var(--text-secondary);
   line-height: 1.6;
@@ -90,6 +91,32 @@
 .queue-route__panel-header {
   justify-content: space-between;
   margin-bottom: 1rem;
+}
+
+.queue-route__playback-meter {
+  margin-top: 1rem;
+}
+
+.queue-route__playback-times {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.queue-route__playback-progress {
+  height: 0.26rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(50, 53, 60, 0.68);
+}
+
+.queue-route__playback-progress span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  transition: width 180ms linear;
 }
 
 .queue-route__art {

@@ -33,6 +33,7 @@ class SpotifyTrack(BaseModel):
     album: Optional[SpotifyAlbum] = None
     artists: List[SpotifyArtist] = Field(default_factory=list)
     duration_ms: Optional[int] = None
+    explicit: Optional[bool] = None
     external_urls: dict = Field(default_factory=dict)
     href: Optional[str] = None
     id: Optional[str] = None
@@ -51,3 +52,33 @@ class SpotifyTrackResponse(BaseModel):
 class SessionQueueResponse(BaseModel):
     currently_playing: Optional[SpotifyTrack] = None
     queue: List[SpotifyTrack] = Field(default_factory=list)
+
+
+class SpotifyPlaybackDevice(BaseModel):
+    id: Optional[str] = None
+    is_active: bool = False
+    is_restricted: bool = False
+    name: Optional[str] = None
+    type: Optional[str] = None
+    volume_percent: Optional[int] = None
+
+
+class SpotifyPlaybackContext(BaseModel):
+    href: Optional[str] = None
+    type: Optional[str] = None
+    uri: Optional[str] = None
+
+
+class SpotifyPlaybackStateResponse(BaseModel):
+    device: Optional[SpotifyPlaybackDevice] = None
+    repeat_state: Optional[str] = None
+    shuffle_state: Optional[bool] = None
+    context: Optional[SpotifyPlaybackContext] = None
+    timestamp: Optional[int] = None
+    progress_ms: Optional[int] = None
+    is_playing: bool = False
+    item: Optional[SpotifyTrack] = None
+
+
+class SpotifyAvailableDevicesResponse(BaseModel):
+    devices: List[SpotifyPlaybackDevice] = Field(default_factory=list)

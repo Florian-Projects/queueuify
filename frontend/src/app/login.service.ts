@@ -27,6 +27,7 @@ export type AuthMode = 'spotify' | 'anonymous' | 'unknown' | null;
 })
 export class LoginService {
   private static readonly sessionKey = 'session_key';
+  private static readonly pendingJoinKey = 'pending_join_session_code';
 
   private static getRandomState() {
     const array = new Uint32Array(32);
@@ -89,6 +90,23 @@ export class LoginService {
   clearClientSession() {
     localStorage.removeItem(LoginService.sessionKey);
     this.setLoggedIn(false, null);
+  }
+
+  setPendingJoinCode(sessionCode: string | null) {
+    if (!sessionCode) {
+      sessionStorage.removeItem(LoginService.pendingJoinKey);
+      return;
+    }
+
+    sessionStorage.setItem(LoginService.pendingJoinKey, sessionCode);
+  }
+
+  getPendingJoinCode(): string | null {
+    return sessionStorage.getItem(LoginService.pendingJoinKey);
+  }
+
+  clearPendingJoinCode() {
+    sessionStorage.removeItem(LoginService.pendingJoinKey);
   }
 
   login(): Observable<LoginResponse> {

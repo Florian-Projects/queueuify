@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthMode, LoginService } from '../login.service';
 import { SessionService } from '../session-manager/session.service';
 import { sessionState } from '../session-manager/session-manager.interfaces';
@@ -12,6 +13,10 @@ type PendingAction = 'spotify' | 'anonymous' | 'create' | 'join' | 'logout' | nu
   styleUrls: ['./landing.component.scss'],
 })
 export class LandingComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  private pendingJoinCodeFromLink: string | null = null;
+  private attemptedAutoJoinCode: string | null = null;
+
   protected readonly supportText =
     "By continuing, you agree to Queueify's editorial standards and data privacy layers.";
 
@@ -27,6 +32,7 @@ export class LandingComponent implements OnInit {
   };
 
   constructor(
+    private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly loginService: LoginService,
     private readonly sessionService: SessionService,
@@ -35,34 +41,120 @@ export class LandingComponent implements OnInit {
   ngOnInit(): void {
     this.loggedIn = this.loginService.loggedIn;
     this.authMode = this.loginService.getAuthMode();
-    if (this.loggedIn) {
-      this.loginService.bootstrapCurrentUser().subscribe({
-        error: () => undefined,
-      });
-    }
-
     this.sessionState = this.sessionService.getSessionState();
-    if (this.sessionState.isInSession) {
-      this.router.navigateByUrl('/search');
+
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const rawJoinCode = params.get('join');
+        const joinError = params.get('joinError');
+        const normalizedJoinCode = rawJoinCode
+          ? this.sessionService.normalizeSessionToken(rawJoinCode)
+          : '';
+        const nextJoinCode =
+          normalizedJoinCode.length === 6 ? normalizedJoinCode : null;
+
+        if (this.pendingJoinCodeFromLink !== nextJoinCode) {
+          this.attemptedAutoJoinCode = null;
+        }
+
+        this.pendingJoinCodeFromLink = nextJoinCode;
+
+        if (rawJoinCode && !nextJoinCode) {
+          this.loginService.clearPendingJoinCode();
+          this.errorMessage = 'The session link is invalid.';
+          return;
+        }
+
+        if (nextJoinCode) {
+          this.loginService.setPendingJoinCode(nextJoinCode);
+          this.sessionCode = nextJoinCode;
+        } else {
+          this.loginService.clearPendingJoinCode();
+        }
+
+        if (joinError) {
+          this.errorMessage = joinError;
+          this.pendingAction = null;
+          this.attemptedAutoJoinCode = nextJoinCode;
+          return;
+        }
+
+        if (!this.pendingAction) {
+          this.errorMessage = '';
+        }
+
+        this.maybeHandlePendingJoin();
+      });
+
+    if (this.loggedIn) {
+      this.loginService
+        .bootstrapCurrentUser()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            this.resolveCurrentSessionState();
+          },
+          error: () => {
+            this.resolveCurrentSessionState();
+          },
+        });
+    } else {
+      this.handleResolvedSessionState(this.sessionState);
     }
 
-    this.loginService.loggedInChanged.subscribe((loggedIn: boolean) => {
-      this.loggedIn = loggedIn;
-      if (!loggedIn) {
-        this.sessionCode = '';
-      }
-    });
+    this.loginService.loggedInChanged
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((loggedIn: boolean) => {
+        this.loggedIn = loggedIn;
+        if (!loggedIn) {
+          this.sessionCode = this.pendingJoinCodeFromLink ?? '';
+          this.sessionState = {
+            isInSession: false,
+            sessionToken: null,
+            isOwner: false,
+          };
+          return;
+        }
 
-    this.loginService.authModeChanged.subscribe((authMode: AuthMode) => {
-      this.authMode = authMode;
-    });
+        this.resolveCurrentSessionState();
+      });
 
-    this.sessionService.sessionChanged.subscribe((sessionState: sessionState) => {
-      this.sessionState = sessionState;
-      if (sessionState.isInSession) {
-        this.router.navigateByUrl('/search');
-      }
-    });
+    this.loginService.authModeChanged
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((authMode: AuthMode) => {
+        this.authMode = authMode;
+      });
+
+    this.sessionService.sessionChanged
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((sessionState: sessionState) => {
+        this.sessionState = sessionState;
+        if (sessionState.isInSession) {
+          if (this.pendingJoinCodeFromLink) {
+            if (sessionState.sessionToken === this.pendingJoinCodeFromLink) {
+              this.clearPendingJoinIntent();
+              this.pendingAction = null;
+              this.router.navigateByUrl('/search');
+              return;
+            }
+
+            this.clearPendingJoinIntent(false);
+            this.errorMessage =
+              'Leave your current session before joining a different room.';
+            this.pendingAction = null;
+            return;
+          }
+
+          const targetRoute =
+            this.pendingAction === 'create' ? '/session' : '/search';
+          this.pendingAction = null;
+          this.router.navigateByUrl(targetRoute);
+          return;
+        }
+
+        this.maybeHandlePendingJoin();
+      });
   }
 
   protected get isLoggedOut(): boolean {
@@ -111,7 +203,7 @@ export class LandingComponent implements OnInit {
 
   protected get eyebrow(): string {
     if (this.isLoggedOut) {
-      return 'Pure Sonic Experience';
+      return 'Shared Music Sessions';
     }
 
     if (this.authMode === 'spotify') {
@@ -217,6 +309,7 @@ export class LandingComponent implements OnInit {
   private startSpotifyLogin(): void {
     this.pendingAction = 'spotify';
     this.errorMessage = '';
+    this.persistJoinIntent();
     this.loginService.login().subscribe({
       next: (response) => {
         window.open(response.authorization_url, '_self');
@@ -230,10 +323,17 @@ export class LandingComponent implements OnInit {
   private startAnonymousLogin(): void {
     this.pendingAction = 'anonymous';
     this.errorMessage = '';
+    this.persistJoinIntent();
     this.loginService.loginAnonymous().subscribe({
       next: () => {
-        this.pendingAction = null;
         this.sessionService.resetSessionState();
+        const pendingJoinCode = this.getActiveJoinIntentCode();
+        if (pendingJoinCode) {
+          this.joinSession(pendingJoinCode, true);
+          return;
+        }
+
+        this.pendingAction = null;
       },
       error: () => {
         this.pendingAction = null;
@@ -247,12 +347,12 @@ export class LandingComponent implements OnInit {
       return;
     }
 
+    this.clearPendingJoinIntent(false);
     this.pendingAction = 'create';
     this.errorMessage = '';
     this.sessionService.createSessionRequest().subscribe({
       next: () => {
-        this.pendingAction = null;
-        this.router.navigateByUrl('/search');
+        return;
       },
       error: (error) => {
         this.handleActionError(error, 'Could not start the session.');
@@ -260,14 +360,19 @@ export class LandingComponent implements OnInit {
     });
   }
 
-  private joinSession(): void {
-    const normalizedCode = this.sessionService.normalizeSessionToken(
-      this.sessionCode,
-    );
+  private joinSession(sessionCode = this.sessionCode, isAutomatic = false): void {
+    const normalizedCode = this.sessionService.normalizeSessionToken(sessionCode);
 
     if (normalizedCode.length !== 6) {
       this.errorMessage = 'Enter the 6-character session code.';
       return;
+    }
+
+    if (!isAutomatic) {
+      this.clearPendingJoinIntent(false);
+    } else {
+      this.loginService.setPendingJoinCode(normalizedCode);
+      this.attemptedAutoJoinCode = normalizedCode;
     }
 
     this.pendingAction = 'join';
@@ -275,10 +380,12 @@ export class LandingComponent implements OnInit {
     this.sessionCode = normalizedCode;
     this.sessionService.joinSessionRequest(normalizedCode).subscribe({
       next: () => {
-        this.pendingAction = null;
-        this.router.navigateByUrl('/search');
+        return;
       },
       error: (error) => {
+        if (isAutomatic) {
+          this.loginService.clearPendingJoinCode();
+        }
         this.handleActionError(error, 'Could not join that session.');
       },
     });
@@ -307,6 +414,101 @@ export class LandingComponent implements OnInit {
     this.sessionService.resetSessionState();
     this.pendingAction = null;
     this.errorMessage = '';
+  }
+
+  private resolveCurrentSessionState(): void {
+    this.sessionService
+      .fetchSessionStateRequest()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (sessionState) => {
+          this.handleResolvedSessionState(sessionState);
+        },
+        error: () => {
+          this.handleResolvedSessionState({
+            isInSession: false,
+            sessionToken: null,
+            isOwner: false,
+          });
+        },
+      });
+  }
+
+  private handleResolvedSessionState(sessionState: sessionState): void {
+    this.sessionState = sessionState;
+    if (sessionState.isInSession) {
+      if (!this.pendingJoinCodeFromLink) {
+        this.router.navigateByUrl('/search');
+        return;
+      }
+
+      if (sessionState.sessionToken === this.pendingJoinCodeFromLink) {
+        this.clearPendingJoinIntent();
+        this.router.navigateByUrl('/search');
+        return;
+      }
+
+      this.clearPendingJoinIntent(false);
+      this.errorMessage =
+        'Leave your current session before joining a different room.';
+      return;
+    }
+
+    this.maybeHandlePendingJoin();
+  }
+
+  private maybeHandlePendingJoin(): void {
+    if (
+      !this.pendingJoinCodeFromLink ||
+      !this.loggedIn ||
+      this.pendingAction !== null ||
+      this.sessionState.isInSession
+    ) {
+      return;
+    }
+
+    if (this.attemptedAutoJoinCode === this.pendingJoinCodeFromLink) {
+      return;
+    }
+
+    this.joinSession(this.pendingJoinCodeFromLink, true);
+  }
+
+  private getActiveJoinIntentCode(): string | null {
+    const typedCode = this.sessionService.normalizeSessionToken(this.sessionCode);
+    if (typedCode.length === 6) {
+      return typedCode;
+    }
+
+    if (this.pendingJoinCodeFromLink) {
+      return this.pendingJoinCodeFromLink;
+    }
+
+    const storedCode = this.loginService.getPendingJoinCode();
+    if (!storedCode) {
+      return null;
+    }
+
+    const normalizedStoredCode = this.sessionService.normalizeSessionToken(storedCode);
+    return normalizedStoredCode.length === 6 ? normalizedStoredCode : null;
+  }
+
+  private persistJoinIntent(): void {
+    const joinIntentCode = this.getActiveJoinIntentCode();
+    if (joinIntentCode) {
+      this.loginService.setPendingJoinCode(joinIntentCode);
+    }
+  }
+
+  private clearPendingJoinIntent(clearInput = true): void {
+    this.loginService.clearPendingJoinCode();
+    this.pendingJoinCodeFromLink = null;
+    this.attemptedAutoJoinCode = null;
+    if (!clearInput) {
+      return;
+    }
+
+    this.sessionCode = '';
   }
 
   private handleActionError(error: any, fallbackMessage: string): void {
