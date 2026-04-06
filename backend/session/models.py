@@ -25,7 +25,9 @@ class PlaybackBackend(StrEnum):
 class SessionPlaybackSyncState(StrEnum):
     SYNCED = "synced"
     READY = "ready"
-    OUT_OF_SYNC = "out_of_sync"
+    PAUSED = "paused"
+    WRONG_TRACK = "wrong_track"
+    WRONG_POSITION = "wrong_position"
     NO_ACTIVE_DEVICE = "no_active_device"
     RESTRICTED_DEVICE = "restricted_device"
     NO_SPOTIFY_SESSION = "no_spotify_session"
@@ -160,10 +162,13 @@ class SessionPlaybackTargetStatusResponse(BaseModel):
     display_name: str
     auth_mode: str
     is_host: bool
+    is_leader: bool
     eligible_for_everyone_playback: bool
     device_available: bool
     device_is_restricted: bool
     is_playing: bool
+    following_room: bool
+    progress_delta_ms: Optional[int] = None
     sync_state: SessionPlaybackSyncState
     status_message: str
 

@@ -67,9 +67,32 @@ class SpotifyHostPlaybackProvider(PlaybackProvider):
         async with await SpotifyConnector.create(user=host_user) as connector:
             await connector.start_playback(uris=[track_uri], device_id=device_id)
 
+    async def play_at_position(
+        self,
+        host_user,
+        *,
+        track_uri=None,
+        context_uri=None,
+        offset_track_uri=None,
+        position_ms=None,
+        device_id=None,
+    ):
+        async with await SpotifyConnector.create(user=host_user) as connector:
+            await connector.start_playback(
+                uris=[track_uri] if track_uri else None,
+                context_uri=context_uri,
+                offset_uri=offset_track_uri,
+                position_ms=position_ms,
+                device_id=device_id,
+            )
+
     async def pause(self, host_user, device_id=None):
         async with await SpotifyConnector.create(user=host_user) as connector:
             await connector.pause_playback(device_id=device_id)
+
+    async def seek(self, host_user, position_ms: int, device_id=None):
+        async with await SpotifyConnector.create(user=host_user) as connector:
+            await connector.seek_to_position(position_ms, device_id=device_id)
 
     async def resume(self, host_user, device_id=None):
         async with await SpotifyConnector.create(user=host_user) as connector:

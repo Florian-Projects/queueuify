@@ -30,6 +30,7 @@ from session.models import (
 from session.playback_sync import (
     SessionPlaybackTargetState,
     collect_session_playback_target_states,
+    reconcile_session_playback_target_states,
 )
 from session.settings_service import ensure_session_settings
 
@@ -403,7 +404,7 @@ def _current_track_projection_from_state(
 
 def _canonical_target_state(target_states: list[SessionPlaybackTargetState]):
     host_state = next((state for state in target_states if state.is_host), None)
-    if host_state and host_state.provider_state:
+    if host_state is not None:
         return host_state
 
     return next(
@@ -413,7 +414,15 @@ def _canonical_target_state(target_states: list[SessionPlaybackTargetState]):
 
 
 def _ready_everyone_targets(target_states: list[SessionPlaybackTargetState]):
-    return [target_state for target_state in target_states if target_state.can_start_playback]
+    leader_target = _canonical_target_state(target_states)
+    if leader_target is None or not leader_target.participates_in_room_playback:
+        return []
+
+    return [
+        target_state
+        for target_state in target_states
+        if target_state.participates_in_room_playback
+    ]
 
 
 async def _update_everyone_queue_item_statuses(
@@ -425,7 +434,7 @@ async def _update_everyone_queue_item_statuses(
         status=QueueItemStatus.PLAYING,
     )
     if current_item is None:
-        return
+        return False
 
     current_track_uri = current_item.spotify_track_uri
     if any(
@@ -433,24 +442,45 @@ async def _update_everyone_queue_item_statuses(
         and target_state.provider_state.current_track
         and target_state.provider_state.current_track.uri == current_track_uri
         for target_state in target_states
-        if target_state.eligible_for_everyone_playback
+        if target_state.participates_in_room_playback
     ):
-        return
+        return False
 
     if not _ready_everyone_targets(target_states):
-        return
+        return False
+
+    canonical_target = _canonical_target_state(target_states)
+    if (
+        canonical_target
+        and canonical_target.provider_state
+        and canonical_target.provider_state.current_track
+        and canonical_target.provider_state.current_track.uri != current_track_uri
+    ):
+        current_item.status = QueueItemStatus.PLAYED
+        current_item.provider_dispatch_state = "interrupted_by_leader"
+        current_item.played_at = datetime.utcnow()
+        await current_item.save(
+            update_fields=["status", "provider_dispatch_state", "played_at"]
+        )
+        return False
 
     current_item.status = QueueItemStatus.PLAYED
     current_item.provider_dispatch_state = "played"
     current_item.played_at = datetime.utcnow()
     await current_item.save(update_fields=["status", "provider_dispatch_state", "played_at"])
+    return True
 
 
 async def _dispatch_head_item_everyone(
     session: GroupSession,
     settings,
     target_states: list[SessionPlaybackTargetState],
+    *,
+    allow_autoplay: bool,
 ):
+    if not allow_autoplay:
+        return False
+
     items = await _active_queue_items(session)
     next_item = _dispatchable_item(items)
     if next_item is None:
@@ -554,25 +584,16 @@ def _build_everyone_playback_status(target_states: list[SessionPlaybackTargetSta
     canonical_target = _canonical_target_state(target_states)
     canonical_state = canonical_target.provider_state if canonical_target else None
     room_ready = bool(_ready_everyone_targets(target_states))
-    any_device_available = any(
-        target_state.provider_state and target_state.provider_state.device_available
-        for target_state in target_states
-        if target_state.eligible_for_everyone_playback
-    )
 
     return QueuePlaybackStatusResponse(
         backend=PlaybackBackend.SPOTIFY_HOST,
         device_id=canonical_state.device_id if canonical_state else None,
         device_name=canonical_state.device_name if canonical_state else None,
-        device_available=any_device_available,
-        device_is_restricted=False
-        if room_ready
-        else bool(canonical_state.device_is_restricted if canonical_state else False),
-        is_playing=any(
-            target_state.provider_state and target_state.provider_state.is_playing
-            for target_state in target_states
-            if target_state.eligible_for_everyone_playback
+        device_available=bool(canonical_state.device_available if canonical_state else False),
+        device_is_restricted=bool(
+            canonical_state.device_is_restricted if canonical_state else False
         ),
+        is_playing=bool(canonical_state.is_playing if canonical_state else False),
         context_uri=canonical_state.context_uri if canonical_state else None,
         progress_ms=canonical_state.progress_ms if canonical_state else None,
         dispatch_block_reason=None if room_ready else "no_ready_member_device",
@@ -649,10 +670,24 @@ async def _host_only_queue_projection(session: GroupSession, viewer, settings):
 async def _everyone_queue_projection(session: GroupSession, viewer, settings):
     async with _session_lock(session.id):
         await remove_blocked_explicit_queue_items(session, settings)
-        target_states = await collect_session_playback_target_states(session, settings)
-        await _update_everyone_queue_item_statuses(session, target_states)
-        if await _dispatch_head_item_everyone(session, settings, target_states):
-            target_states = await collect_session_playback_target_states(session, settings)
+        target_states = await reconcile_session_playback_target_states(
+            session,
+            settings,
+        )
+        room_track_completed = await _update_everyone_queue_item_statuses(
+            session,
+            target_states,
+        )
+        if await _dispatch_head_item_everyone(
+            session,
+            settings,
+            target_states,
+            allow_autoplay=room_track_completed,
+        ):
+            target_states = await reconcile_session_playback_target_states(
+                session,
+                settings,
+            )
             await _update_everyone_queue_item_statuses(session, target_states)
 
         items = await _active_queue_items(session)
@@ -794,7 +829,10 @@ async def _perform_transport_control_everyone(
     require_current_track: bool = True,
 ):
     provider = get_playback_provider(settings.playback_backend)
-    target_states = await collect_session_playback_target_states(session, settings)
+    target_states = await reconcile_session_playback_target_states(
+        session,
+        settings,
+    )
     ready_targets = _ready_everyone_targets(target_states)
     if not ready_targets:
         raise HTTPException(

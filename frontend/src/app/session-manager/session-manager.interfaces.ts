@@ -106,14 +106,19 @@ export interface SessionPlaybackTargetStatus {
   display_name: string;
   auth_mode: 'spotify' | 'anonymous';
   is_host: boolean;
+  is_leader: boolean;
   eligible_for_everyone_playback: boolean;
   device_available: boolean;
   device_is_restricted: boolean;
   is_playing: boolean;
+  following_room: boolean;
+  progress_delta_ms?: number | null;
   sync_state:
     | 'synced'
     | 'ready'
-    | 'out_of_sync'
+    | 'paused'
+    | 'wrong_track'
+    | 'wrong_position'
     | 'no_active_device'
     | 'restricted_device'
     | 'no_spotify_session'

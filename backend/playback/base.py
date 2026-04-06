@@ -38,7 +38,24 @@ class PlaybackProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def play_at_position(
+        self,
+        host_user,
+        *,
+        track_uri: Optional[str] = None,
+        context_uri: Optional[str] = None,
+        offset_track_uri: Optional[str] = None,
+        position_ms: Optional[int] = None,
+        device_id: Optional[str] = None,
+    ):
+        raise NotImplementedError
+
+    @abstractmethod
     async def pause(self, host_user, device_id: Optional[str] = None):
+        raise NotImplementedError
+
+    @abstractmethod
+    async def seek(self, host_user, position_ms: int, device_id: Optional[str] = None):
         raise NotImplementedError
 
     @abstractmethod

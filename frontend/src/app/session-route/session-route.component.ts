@@ -135,8 +135,12 @@ export class SessionRouteComponent implements OnInit {
         return 'Synced';
       case 'ready':
         return 'Ready';
-      case 'out_of_sync':
-        return 'Unsynced';
+      case 'paused':
+        return 'Paused';
+      case 'wrong_track':
+        return 'Wrong Track';
+      case 'wrong_position':
+        return 'Wrong Position';
       case 'restricted_device':
         return 'Restricted';
       case 'no_active_device':
@@ -156,7 +160,8 @@ export class SessionRouteComponent implements OnInit {
         return 'session-route__sync-pill--synced';
       case 'ready':
         return 'session-route__sync-pill--ready';
-      case 'out_of_sync':
+      case 'wrong_track':
+      case 'wrong_position':
         return 'session-route__sync-pill--warning';
       default:
         return 'session-route__sync-pill--muted';

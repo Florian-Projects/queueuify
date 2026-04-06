@@ -14,8 +14,7 @@ from session.models import (
 from session.playback_sync import (
     build_everyone_playback_status_response,
     build_member_sync_status_response,
-    collect_session_playback_target_states,
-    get_room_playing_item,
+    reconcile_session_playback_target_states,
 )
 
 
@@ -51,14 +50,12 @@ async def build_session_settings_response(
     settings: GroupSessionSettings | None = None,
 ):
     settings = settings or await ensure_session_settings(session)
-    room_playing_item = await get_room_playing_item(session)
-    room_track_uri = room_playing_item.spotify_track_uri if room_playing_item else None
-    playback_target_states = await collect_session_playback_target_states(session, settings)
+    playback_target_states = await reconcile_session_playback_target_states(
+        session,
+        settings,
+    )
     member_sync_status = [
-        build_member_sync_status_response(
-            target_state,
-            room_track_uri=room_track_uri,
-        )
+        build_member_sync_status_response(target_state)
         for target_state in playback_target_states
     ]
 

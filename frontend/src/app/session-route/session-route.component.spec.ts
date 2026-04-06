@@ -27,10 +27,13 @@ describe('SessionRouteComponent', () => {
         display_name: 'Host User',
         auth_mode: 'spotify' as const,
         is_host: true,
+        is_leader: true,
         eligible_for_everyone_playback: true,
         device_available: true,
         device_is_restricted: false,
         is_playing: false,
+        following_room: false,
+        progress_delta_ms: null,
         sync_state: 'ready' as const,
         status_message: 'Ready for Everyone playback.',
       },
@@ -161,5 +164,22 @@ describe('SessionRouteComponent', () => {
     expect(component['settingsError']).toContain(
       'Everyone mode requires Disallow anonymous users.',
     );
+  });
+
+  it('renders the new Everyone sync state labels', () => {
+    fixture.detectChanges();
+
+    expect(component['syncStateLabel']({
+      ...settingsResponse.member_sync_status[0],
+      sync_state: 'paused',
+    })).toBe('Paused');
+    expect(component['syncStateLabel']({
+      ...settingsResponse.member_sync_status[0],
+      sync_state: 'wrong_track',
+    })).toBe('Wrong Track');
+    expect(component['syncStateLabel']({
+      ...settingsResponse.member_sync_status[0],
+      sync_state: 'wrong_position',
+    })).toBe('Wrong Position');
   });
 });

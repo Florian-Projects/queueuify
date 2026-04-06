@@ -185,6 +185,9 @@
                   <span class="session-route__host-badge" *ngIf="member.is_host">
                     Host
                   </span>
+                  <span class="session-route__host-badge" *ngIf="member.is_leader">
+                    Leader
+                  </span>
                 </div>
                 <p>{{ member.status_message }}</p>
               </div>

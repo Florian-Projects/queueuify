@@ -211,6 +211,9 @@ class SpotifyConnector:
         self,
         *,
         uris: Optional[list[str]] = None,
+        context_uri: Optional[str] = None,
+        offset_uri: Optional[str] = None,
+        position_ms: Optional[int] = None,
         device_id: Optional[str] = None,
     ):
         params = {}
@@ -220,12 +223,35 @@ class SpotifyConnector:
         json_body = {}
         if uris:
             json_body["uris"] = uris
+        if context_uri:
+            json_body["context_uri"] = context_uri
+        if offset_uri:
+            json_body["offset"] = {"uri": offset_uri}
+        if position_ms is not None:
+            json_body["position_ms"] = max(position_ms, 0)
 
         await self.send_request(
             method="put",
             url="/me/player/play",
             params=params or None,
             json=json_body or None,
+        )
+        return True
+
+    async def seek_to_position(
+        self,
+        position_ms: int,
+        *,
+        device_id: Optional[str] = None,
+    ):
+        params = {"position_ms": max(position_ms, 0)}
+        if device_id:
+            params["device_id"] = device_id
+
+        await self.send_request(
+            method="put",
+            url="/me/player/seek",
+            params=params,
         )
         return True
 
